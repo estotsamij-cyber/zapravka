@@ -649,10 +649,10 @@
                         const consumption = ((parseFloat(prevItem.volume) / item.mileage) * 100).toFixed(2);
                         consumptionHTML = `<div class="history-details">Расход: ${consumption} л/100км (проехал ${item.mileage}км с прошлой заправки)</div>`;
                     } else if (!item.mileage || item.mileage === 0) {
-                        consumptionHTML = `<div class="history-details" style="color: #ff6b6b;">❌ Нет пробега</div>`;
-                    }
-                } else if (!item.mileage || item.mileage === 0) {
-                    consumptionHTML = `<div class="history-details" style="color: #ff6b6b;">❌ Нет пробега</div>`;
+    consumptionHTML = `<div class="history-details" style="color: #999;">⚠️ Нет пробега</div>`;
+}
+} else if (!item.mileage || item.mileage === 0) {
+    consumptionHTML = `<div class="history-details" style="color: #999;">⚠️ Нет пробега</div>`;
                 }
                 
                 return `
