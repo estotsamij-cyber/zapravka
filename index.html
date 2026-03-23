@@ -3,53 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⛽ ЗАПРАВКА</title>
+    <title>⛽ ЗАПРАВКА 2.0</title>
     <style>
-        /* Я сохранила твой стиль, добавила только sticky для шапки статистики */
+        /* Чистим старый мусор и делаем красиво */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh; padding: 20px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff; min-height: 100vh; padding: 15px;
         }
-        .container { max-width: 900px; margin: 0 auto; }
+        .container { max-width: 600px; margin: 0 auto; }
+        
+        /* Кнопка добавления */
+        .btn-add {
+            background: #4CAF50; color: white; border: none; padding: 18px;
+            border-radius: 15px; width: 100%; font-size: 18px; font-weight: bold;
+            margin-bottom: 20px; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+            cursor: pointer;
+        }
+
+        /* Карточки */
         .card {
-            background: white; border-radius: 20px; padding: 20px;
-            margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.95); color: #333;
+            border-radius: 20px; padding: 20px; margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
-        /* Закрепляем статистику сверху при скролле */
-        .stats-card { position: sticky; top: 10px; z-index: 100; }
         
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
-        .stat-box { background: #f8f9fa; padding: 15px; border-radius: 15px; border-left: 5px solid #667eea; }
-        .stat-label { font-size: 12px; color: #666; margin-bottom: 5px; }
-        .stat-value { font-size: 18px; font-weight: bold; color: #333; }
-        .corp-value { color: #2563eb; }
+        /* Липкая статистика */
+        .stats-card { position: sticky; top: 10px; z-index: 100; border: 2px solid #4a90e2; }
         
-        .filter-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+        h2 { font-size: 20px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        
+        .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
         select {
-            width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd;
-            font-size: 16px; margin-bottom: 10px; background: #fdfdfd;
+            padding: 12px; border-radius: 12px; border: 1px solid #ddd;
+            font-size: 16px; background: #f8f9fa; width: 100%;
         }
-        
+
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .stat-box { background: #f0f4f8; padding: 15px; border-radius: 15px; text-align: center; }
+        .stat-label { font-size: 12px; color: #666; text-transform: uppercase; margin-bottom: 5px; }
+        .stat-value { font-size: 18px; font-weight: 800; color: #1a1a2e; }
+        .corp-color { color: #007bff; }
+
+        /* История */
         .history-item {
             background: #f8f9fa; border-radius: 15px; padding: 15px;
-            margin-bottom: 15px; position: relative; border: 1px solid #eee;
+            margin-bottom: 12px; position: relative; border-left: 5px solid #007bff;
         }
-        .history-date { font-size: 12px; color: #888; margin-bottom: 8px; }
-        .history-details { font-size: 15px; line-height: 1.4; color: #444; }
-        .corp-amount { color: #2563eb; font-weight: bold; margin-top: 8px; display: block; }
+        .item-date { font-size: 12px; color: #888; margin-bottom: 5px; }
+        .item-info { font-size: 15px; line-height: 1.4; }
+        .item-corp { display: block; margin-top: 8px; font-weight: bold; color: #007bff; font-size: 16px; }
         
-        .btn-add {
-            background: #4CAF50; color: white; border: none; padding: 15px;
-            border-radius: 15px; width: 100%; font-size: 18px; font-weight: bold;
-            margin-bottom: 20px; cursor: pointer;
+        .btn-del {
+            position: absolute; top: 15px; right: 15px; background: #ff4d4d;
+            color: white; border: none; width: 30px; height: 30px; border-radius: 8px; cursor: pointer;
         }
-        .btn-delete {
-            position: absolute; top: 10px; right: 10px; background: #ff4d4d;
-            color: white; border: none; border-radius: 8px; padding: 5px 10px; cursor: pointer;
-        }
-        canvas { width: 100% !important; height: 200px !important; margin-top: 15px; }
+
+        canvas { width: 100% !important; height: 150px !important; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -59,206 +70,171 @@
 
     <div class="card stats-card">
         <h2>📊 Статистика</h2>
-        <div class="filter-section">
-            <div class="grid">
-                <select id="yearSelect" onchange="updateAll()">
-                    <option value="all">Все года</option>
-                </select>
-                <select id="monthSelect" onchange="updateAll()">
-                    <option value="all">Все месяцы</option>
-                    <option value="1">Январь</option><option value="2">Февраль</option>
-                    <option value="3">Март</option><option value="4">Апрель</option>
-                    <option value="5">Май</option><option value="6">Июнь</option>
-                    <option value="7">Июль</option><option value="8">Август</option>
-                    <option value="9">Сентябрь</option><option value="10">Октябрь</option>
-                    <option value="11">Ноябрь</option><option value="12">Декабрь</option>
-                </select>
-            </div>
+        <div class="filter-grid">
+            <select id="yearSelect" onchange="updateUI()"><option value="all">Все года</option></select>
+            <select id="monthSelect" onchange="updateUI()">
+                <option value="all">Все месяцы</option>
+                <option value="1">Январь</option><option value="2">Февраль</option>
+                <option value="3">Март</option><option value="4">Апрель</option>
+                <option value="5">Май</option><option value="6">Июнь</option>
+                <option value="7">Июль</option><option value="8">Август</option>
+                <option value="9">Сентябрь</option><option value="10">Октябрь</option>
+                <option value="11">Ноябрь</option><option value="12">Декабрь</option>
+            </select>
         </div>
-        
-        <div class="grid">
+        <div class="stat-grid">
             <div class="stat-box">
-                <div class="stat-label">Средний расход</div>
-                <div id="avgConsumption" class="stat-value">0.00 л/100км</div>
+                <div class="stat-label">Расход ср.</div>
+                <div id="res-avg" class="stat-value">0.00</div>
             </div>
             <div class="stat-box">
                 <div class="stat-label">К корпчёту</div>
-                <div id="totalCorp" class="stat-value corp-value">0.00 €</div>
+                <div id="res-corp" class="stat-value corp-color">0.00 €</div>
             </div>
         </div>
-        <canvas id="fuelChart"></canvas>
+        <canvas id="mainChart"></canvas>
     </div>
 
     <div class="card">
-        <h2>📋 История заправок</h2>
-        <div id="historyList" style="margin-top: 15px;">
-            </div>
+        <h2>📋 История</h2>
+        <div id="history-list"></div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     let db;
-    let fuelChart;
-    const request = indexedDB.open("ZapravkaDB", 1);
+    let myChart;
+    const req = indexedDB.open("ZapravkaProDB", 1);
 
-    request.onupgradeneeded = e => {
+    req.onupgradeneeded = e => {
         db = e.target.result;
-        db.createObjectStore("logs", { keyPath: "id", autoIncrement: true });
+        db.createObjectStore("logs", { keyPath: "id" });
     };
 
-    request.onsuccess = e => {
+    req.onsuccess = e => {
         db = e.target.result;
-        initYearFilter();
-        updateAll();
+        refreshYearFilter();
+        updateUI();
     };
 
     function addNewEntry() {
-        const price = prompt("Цена за литр (€):", "1.729");
-        const liters = prompt("Сколько литров:", "50");
-        const odometer = prompt("Пробег сейчас (км):");
-        
-        if (!price || !liters || !odometer) return;
+        const p = prompt("Цена за литр (€):", "1.729");
+        const l = prompt("Литры:", "50");
+        const o = prompt("Пробег (км):");
+        if(!p || !l || !o) return;
 
-        const now = new Date();
+        const d = new Date();
         const entry = {
             id: Date.now(),
-            date: now.toLocaleString('ru-RU'),
-            year: now.getFullYear(),
-            month: now.getMonth() + 1,
-            price: parseFloat(price),
-            liters: parseFloat(liters),
-            odometer: parseInt(odometer)
+            date: d.toLocaleString('ru-RU'),
+            year: d.getFullYear(),
+            month: d.getMonth() + 1,
+            price: parseFloat(p),
+            liters: parseFloat(l),
+            odo: parseInt(o)
         };
 
         const tx = db.transaction("logs", "readwrite");
         tx.objectStore("logs").add(entry);
-        tx.oncomplete = () => {
-            initYearFilter();
-            updateAll();
-        };
+        tx.oncomplete = () => { refreshYearFilter(); updateUI(); };
     }
 
-    async function updateAll() {
+    async function updateUI() {
         const tx = db.transaction("logs", "readonly");
-        const store = tx.objectStore("logs");
-        const allData = await new Promise(res => {
-            store.getAll().onsuccess = e => res(e.target.result);
+        const data = await new Promise(res => {
+            tx.objectStore("logs").getAll().onsuccess = e => res(e.target.result);
         });
 
-        // 1. Сортируем: Новые сверху
-        const sortedData = allData.sort((a, b) => b.id - a.id);
-
-        // 2. Фильтруем по году и месяцу
-        const selYear = document.getElementById('yearSelect').value;
-        const selMonth = document.getElementById('monthSelect').value;
-
-        const filteredData = sortedData.filter(item => {
-            const matchYear = (selYear === 'all' || item.year == selYear);
-            const matchMonth = (selMonth === 'all' || item.month == selMonth);
-            return matchYear && matchMonth;
-        });
-
-        renderStats(filteredData);
-        renderHistory(filteredData);
-        updateChart(filteredData);
-    }
-
-    function renderStats(data) {
-        let totalLiters = 0;
-        let totalCorp = 0;
-        let firstOdo = 0;
-        let lastOdo = 0;
-
-        if (data.length > 0) {
-            // Для расхода берем разницу пробега в отфильтрованном периоде
-            const sortedByOdo = [...data].sort((a,b) => a.odometer - b.odometer);
-            firstOdo = sortedByOdo[0].odometer;
-            lastOdo = sortedByOdo[sortedByOdo.length-1].odometer;
-            
-            data.forEach(item => {
-                totalLiters += item.liters;
-                // Считаем корпчёт (80.65% от суммы - как у тебя в коде было)
-                totalCorp += (item.price * item.liters) * 0.8065;
-            });
-        }
-
-        const distance = lastOdo - firstOdo;
-        const avg = distance > 0 ? (totalLiters / distance * 100) : 0;
-
-        document.getElementById('avgConsumption').textContent = `${avg.toFixed(2)} л/100км`;
-        document.getElementById('totalCorp').textContent = `${totalCorp.toFixed(2)} €`;
-    }
-
-    function renderHistory(data) {
-        const list = document.getElementById('historyList');
-        list.innerHTML = data.length ? '' : '<p style="color: #888; text-align: center;">Нет данных за этот период</p>';
+        // Сортировка: новые сверху
+        const sorted = data.sort((a,b) => b.id - a.id);
         
-        data.forEach(item => {
-            const corpAmount = (item.price * item.liters) * 0.8065;
+        const selY = document.getElementById('yearSelect').value;
+        const selM = document.getElementById('monthSelect').value;
+
+        // Фильтрация
+        const filtered = sorted.filter(i => {
+            return (selY === 'all' || i.year == selY) && (selM === 'all' || i.month == selM);
+        });
+
+        drawStats(filtered);
+        drawHistory(filtered);
+        drawChart(filtered);
+    }
+
+    function drawStats(data) {
+        let totalL = 0, totalC = 0;
+        if(data.length > 1) {
+            const sortedOdo = [...data].sort((a,b) => a.odo - b.odo);
+            const dist = sortedOdo[sortedOdo.length-1].odo - sortedOdo[0].odo;
+            data.forEach(i => {
+                totalL += i.liters;
+                totalC += (i.price * i.liters) * 0.8065;
+            });
+            const avg = dist > 0 ? (totalL / dist * 100) : 0;
+            document.getElementById('res-avg').innerText = avg.toFixed(2) + " л/100";
+        } else {
+            document.getElementById('res-avg').innerText = "0.00";
+            if(data.length === 1) totalC = (data[0].price * data[0].liters) * 0.8065;
+        }
+        document.getElementById('res-corp').innerText = totalC.toFixed(2) + " €";
+    }
+
+    function drawHistory(data) {
+        const container = document.getElementById('history-list');
+        container.innerHTML = data.length ? '' : '<p style="text-align:center;color:#999">Нет записей</p>';
+        data.forEach(i => {
+            const corp = (i.price * i.liters) * 0.8065;
             const div = document.createElement('div');
             div.className = 'history-item';
             div.innerHTML = `
-                <div class="history-date">${item.date}</div>
-                <div class="history-details">
-                    ${item.price.toFixed(3)} €/L × ${item.liters}L<br>
-                    Пробег: ${item.odometer} км
-                </div>
-                <span class="corp-amount">К корпчёту: ${corpAmount.toFixed(2)} €</span>
-                <button class="btn-delete" onclick="deleteEntry(${item.id})">❌</button>
+                <div class="item-date">${i.date}</div>
+                <div class="item-info"><b>${i.price.toFixed(3)} €/L</b> · ${i.liters}L · ${i.odo} км</div>
+                <span class="item-corp">К корпчёту: ${corp.toFixed(2)} €</span>
+                <button class="btn-del" onclick="deleteEntry(${i.id})">✕</button>
             `;
-            list.appendChild(div);
+            container.appendChild(div);
         });
     }
 
-    function updateChart(data) {
-        const ctx = document.getElementById('fuelChart').getContext('2d');
-        const chartData = [...data].sort((a,b) => a.id - b.id); // Для графика хронология
-
-        if (fuelChart) fuelChart.destroy();
-
-        fuelChart = new Chart(ctx, {
+    function drawChart(data) {
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        const cData = [...data].sort((a,b) => a.id - b.id);
+        if(myChart) myChart.destroy();
+        myChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: chartData.map(i => i.date.split(',')[0]),
+                labels: cData.map(i => i.date.split(',')[0]),
                 datasets: [{
-                    label: 'Цена €/L',
-                    data: chartData.map(i => i.price),
-                    borderColor: '#667eea',
-                    tension: 0.3,
-                    fill: true,
-                    backgroundColor: 'rgba(102, 126, 234, 0.1)'
+                    label: 'Цена',
+                    data: cData.map(i => i.price),
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0,123,255,0.1)',
+                    fill: true, tension: 0.4
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } }
-            }
+            options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: false } } }
         });
     }
 
-    function initYearFilter() {
+    function refreshYearFilter() {
         const tx = db.transaction("logs", "readonly");
         tx.objectStore("logs").getAll().onsuccess = e => {
-            const years = [...new Set(e.target.result.map(i => i.year))].sort((a,b) => b - a);
-            const select = document.getElementById('yearSelect');
-            const currentVal = select.value;
-            select.innerHTML = '<option value="all">Все года</option>';
-            years.forEach(y => {
-                const opt = document.createElement('option');
-                opt.value = y; opt.textContent = y;
-                select.appendChild(opt);
-            });
-            select.value = currentVal;
+            const years = [...new Set(e.target.result.map(i => i.year))].sort((a,b) => b-a);
+            const s = document.getElementById('yearSelect');
+            const cur = s.value;
+            s.innerHTML = '<option value="all">Все года</option>';
+            years.forEach(y => s.innerHTML += `<option value="${y}">${y}</option>`);
+            s.value = cur;
         };
     }
 
     function deleteEntry(id) {
-        if (!confirm("Удалить запись?")) return;
-        const tx = db.transaction("logs", "readwrite");
-        tx.objectStore("logs").delete(id);
-        tx.oncomplete = () => updateAll();
+        if(confirm("Удалить?")) {
+            const tx = db.transaction("logs", "readwrite");
+            tx.objectStore("logs").delete(id);
+            tx.oncomplete = () => updateUI();
+        }
     }
 </script>
 </body>
