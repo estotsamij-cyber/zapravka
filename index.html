@@ -1222,7 +1222,7 @@
                             <div class="history-details">${item.price} €/L × ${item.volume}L</div>
                             <div class="history-details">Платил: ${item.totalWithTax} € (НДС ${(item.totalWithTax - item.totalWithoutTax).toFixed(2)} €)</div>
                             ${consumptionHTML}
-                            <div class="history-cost">К корпсчёту: ${item.totalWithoutTax} €</div>
+                            <div class="history-cost">Без НДС: ${item.totalWithoutTax} €</div>
                         </div>
                         <div style="display: flex; gap: 10px;">
                             <button class="history-delete" onclick="editEntry(${item.id})" style="background: #667eea; padding: 8px 12px; font-size: 14px;">✏️</button>
