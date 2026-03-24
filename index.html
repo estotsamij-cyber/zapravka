@@ -1,0 +1,1796 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⛽ ЗАПРАВКА</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#667eea">
+    <link rel="icon" href="icon.png" type="image/png">
+    <link rel="apple-touch-icon" href="icon.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #333;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-export, .btn-import {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .btn-export:hover, .btn-import:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .calculator-section {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .results {
+            background: #f5f5f5;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+            font-size: 14px;
+        }
+
+        .result-row:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            color: #666;
+        }
+
+        .result-value {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .total-price {
+            font-size: 18px;
+            font-weight: 700;
+            color: #667eea;
+            text-align: right;
+        }
+
+        .btn-save, .btn-clear {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-save {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-clear {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .btn-clear:hover {
+            background: #e0e0e0;
+        }
+
+        .tax-info {
+            background: #fffbea;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #856404;
+            margin-top: 15px;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .history-item {
+            background: #f9f9f9;
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 15px;
+            border: 1px solid #eee;
+        }
+
+        .history-info {
+            flex: 1;
+        }
+
+        .history-date {
+            color: #999;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .history-details {
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        .history-cost {
+            color: #667eea;
+            font-weight: 700;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .history-delete {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s;
+        }
+
+        .history-delete:hover {
+            background: #ff5252;
+            transform: scale(1.1);
+        }
+
+        .clear-all-btn {
+            width: 100%;
+            padding: 15px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            margin-top: 20px;
+            display: none;
+            transition: all 0.3s;
+        }
+
+        .clear-all-btn:hover {
+            background: #ff5252;
+        }
+
+        .history-empty {
+            text-align: center;
+            color: #999;
+            padding: 40px 20px;
+            font-size: 14px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-small {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+
+        /* ПЕРИОД СЕЛЕКТОР */
+        .period-selector {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .period-selector h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .selector-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .selector-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .selector-group label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .selector-group select {
+            padding: 8px 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            background: white;
+            transition: all 0.3s;
+        }
+
+        .selector-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .range-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+            gap: 8px;
+        }
+
+        .range-btn {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .range-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .range-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        /* ГРАФИК */
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-container h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .chart {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 250px;
+            gap: 8px;
+            padding: 20px 10px;
+            background: #f9f9f9;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #eee;
+        }
+
+        .chart-bar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            gap: 5px;
+        }
+
+        .bar {
+            width: 100%;
+            background: linear-gradient(180deg, #667eea 0%, #5568d3 100%);
+            border-radius: 5px 5px 0 0;
+            min-height: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .bar:hover {
+            opacity: 0.8;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .bar.green {
+            background: linear-gradient(180deg, #4caf50 0%, #388e3c 100%);
+        }
+
+        .bar.orange {
+            background: linear-gradient(180deg, #ff9800 0%, #f57c00 100%);
+        }
+
+        .bar.red {
+            background: linear-gradient(180deg, #f44336 0%, #d32f2f 100%);
+        }
+
+        .bar-label {
+            font-size: 11px;
+            color: #999;
+            text-align: center;
+            word-break: break-word;
+            width: 100%;
+        }
+
+        .bar-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            margin-bottom: 5px;
+        }
+
+        .bar:hover .bar-tooltip {
+            opacity: 1;
+        }
+
+        .chart-legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        .period-stats {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .period-stats-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #ddd;
+            font-size: 13px;
+        }
+
+        .period-stats-row:last-child {
+            border-bottom: none;
+        }
+
+        .period-stats-label {
+            color: #666;
+        }
+
+        .period-stats-value {
+            color: #333;
+            font-weight: 600;
+        }
+
+        @media (max-width: 600px) {
+            .calculator-section {
+                padding: 20px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .selector-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .chart {
+                height: 200px;
+            }
+
+
+            .range-buttons {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* МОДАЛЬНОЕ ОКНО КАЛЕНДАРЯ */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: white;
+            margin: 50% auto;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 15px;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: #333;
+            font-size: 20px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .calendar-btn-bottom {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s;
+            z-index: 100;
+        }
+
+        .calendar-btn-bottom:hover {
+            background: #5568d3;
+            transform: scale(1.1);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .calendar-btn-bottom:active {
+            transform: scale(0.95);
+        }
+
+        .history-empty-year {
+            text-align: center;
+            color: #999;
+            padding: 40px 20px;
+            font-size: 14px;
+        }
+
+        .history-empty-year strong {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .modal-content {
+                margin: 100px auto;
+                width: 95%;
+            }
+
+            .calendar-btn-bottom {
+                width: 50px;
+                height: 50px;
+                font-size: 24px;
+                bottom: 15px;
+                right: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⛽ ЗАПРАВКА</h1>
+            <div class="header-buttons">
+                <button class="btn-export" onclick="exportData()">📥 Экспорт</button>
+                <button class="btn-import" onclick="importData()">📤 Импорт</button>
+            </div>
+        </div>
+
+        <div class="calculator-section">
+            <h1>⛽ Калькулятор топлива</h1>
+            <p class="subtitle">Цена без НДС 24%</p>
+
+            <div class="input-group">
+                <label for="price">Цена на заправке (EUR/L)</label>
+                <input 
+                    type="number" 
+                    id="price" 
+                    placeholder="1.90" 
+                    step="0.01"
+                    min="0"
+                    oninput="calculate()"
+                >
+            </div>
+
+            <div class="input-group">
+                <label for="volume">Объём топлива (литры)</label>
+                <input 
+                    type="number" 
+                    id="volume" 
+                    placeholder="40" 
+                    step="0.1"
+                    min="0"
+                    oninput="calculate()"
+                >
+            </div>
+
+            <div class="input-group">
+                <label for="mileage">Триповый пробег (км)</label>
+                <input 
+                    type="number" 
+                    id="mileage" 
+                    placeholder="556" 
+                    step="1"
+                    min="0"
+                >
+            </div>
+
+            <div class="results">
+                <div class="result-row">
+                    <span class="result-label">Цена с НДС</span>
+                    <span class="result-value" id="priceWithTax">0.00 €</span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">НДС (24%)</span>
+                    <span class="result-value" id="taxAmount">0.00 €</span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Цена БЕЗ НДС</span>
+                    <span class="result-value" id="priceWithoutTax">0.00 €</span>
+                </div>
+                <div class="result-row total-price">
+                    <span>Итого к оплате</span>
+                    <span id="totalPrice">0.00 €</span>
+                </div>
+            </div>
+
+            <button class="btn-save" id="saveBtn" onclick="saveToHistory()">💾 Сохранить</button>
+            <button class="btn-clear" onclick="clearInputs()">Очистить</button>
+            <button class="btn-clear" id="cancelEditBtn" onclick="cancelEdit()" style="display: none; background: #ff9800;">❌ Отмена</button>
+
+            <div class="tax-info">
+                <strong>ℹ️ Как это работает:</strong>
+                Вводишь цену и литры, вводишь триповый пробег — всё сохранится в истории. Приложение автоматически считает расход топлива (л/100км) между заправками. Используй "Экспорт" чтобы скачать данные в облако (Google Drive, Dropbox и т.д.).
+            </div>
+        </div>
+
+        <div class="calculator-section">
+            <h2>📋 История заправок</h2>
+            <div id="historyContainer" class="history-list">
+                <div class="history-empty">Истории ещё нет. Сохраняй заправки — они появятся здесь 👇</div>
+            </div>
+            <button class="clear-all-btn" onclick="confirmClearAll()" id="clearAllBtn">Очистить всю историю</button>
+        </div>
+
+        <div class="calculator-section">
+            <h2>📊 Статистика</h2>
+            
+            <!-- ПЕРИОД СЕЛЕКТОР -->
+            <div class="period-selector">
+                <h3>🗓️ Выбери период</h3>
+                
+                <div class="selector-grid">
+                    <div class="selector-group">
+                        <label for="yearSelect">Год</label>
+                        <select id="yearSelect" onchange="onPeriodSelectChange()">
+                            <option value="">Все года</option>
+                        </select>
+                    </div>
+                    <div class="selector-group">
+                        <label for="monthSelect">Месяц</label>
+                        <select id="monthSelect" onchange="onPeriodSelectChange()">
+                            <option value="">Все месяцы</option>
+                            <option value="1">Январь</option>
+                            <option value="2">Февраль</option>
+                            <option value="3">Март</option>
+                            <option value="4">Апрель</option>
+                            <option value="5">Май</option>
+                            <option value="6">Июнь</option>
+                            <option value="7">Июль</option>
+                            <option value="8">Август</option>
+                            <option value="9">Сентябрь</option>
+                            <option value="10">Октябрь</option>
+                            <option value="11">Ноябрь</option>
+                            <option value="12">Декабрь</option>
+                        </select>
+                    </div>
+                    <div class="selector-group">
+                        <label for="daySelect">День</label>
+                        <select id="daySelect" onchange="updateChart()">
+                            <option value="">Все дни</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 10px;">
+                    <label style="font-size: 12px; color: #666; font-weight: 600; display: block; margin-bottom: 8px;">Или выбери промежуток:</label>
+                    <div class="range-buttons">
+                        <button class="range-btn" onclick="setRange('1d')">1 день</button>
+                        <button class="range-btn" onclick="setRange('7d')">1 неделя</button>
+                        <button class="range-btn" onclick="setRange('1m')">1 месяц</button>
+                        <button class="range-btn" onclick="setRange('3m')">3 месяца</button>
+                        <button class="range-btn" onclick="setRange('6m')">6 месяцев</button>
+                        <button class="range-btn" onclick="setRange('1y')">1 год</button>
+                        <button class="range-btn" onclick="setRange('2y')">2 года</button>
+                        <button class="range-btn" onclick="setRange('all')">Всё время</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ГРАФИК -->
+            <div class="chart-container">
+                <h3>📈 График расхода топлива</h3>
+                <div class="chart" id="chart">
+                    <div style="color: #999; margin: auto;">Нет данных за этот период</div>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #4caf50;"></div>
+                        <span>Экономичный (&lt;7 л/100км)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #667eea;"></div>
+                        <span>Нормальный (7-9 л/100км)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ff9800;"></div>
+                        <span>Повышенный (9-11 л/100км)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #f44336;"></div>
+                        <span>Высокий (&gt;11 л/100км)</span>
+                    </div>
+                </div>
+                <div class="period-stats" id="periodStats"></div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalPaid">0.00 €</div>
+                    <div class="stat-label">с НДС</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalWithoutTax">0.00 €</div>
+                    <div class="stat-label">Без НДС</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">НДС</div>
+                    <div class="stat-value" id="totalTax">0.00 €</div>
+                    <div class="stat-small">разница</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Заправок</div>
+                    <div class="stat-value" id="totalRefills">0</div>
+                    <div class="stat-small">штук</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Проехал</div>
+                    <div class="stat-value" id="totalKm">0 км</div>
+                    <div class="stat-small">всего</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Средний расход</div>
+                    <div class="stat-value" id="avgConsumption">— л/100км</div>
+                    <div class="stat-small">средне</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО КАЛЕНДАРЯ -->
+    <div id="calendarModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🗓️ Выбери период</h2>
+                <button class="modal-close" onclick="closeCalendarModal()">✕</button>
+            </div>
+
+            <div class="selector-grid">
+                <div class="selector-group">
+                    <label for="modalYearSelect">Год</label>
+                    <select id="modalYearSelect" onchange="updateHistoryByYear()">
+                        <option value="">Все года</option>
+                    </select>
+                </div>
+                <div class="selector-group">
+                    <label for="modalMonthSelect">Месяц</label>
+                    <select id="modalMonthSelect" onchange="updateHistoryByYear()">
+                        <option value="">Все месяцы</option>
+                        <option value="1">Январь</option>
+                        <option value="2">Февраль</option>
+                        <option value="3">Март</option>
+                        <option value="4">Апрель</option>
+                        <option value="5">Май</option>
+                        <option value="6">Июнь</option>
+                        <option value="7">Июль</option>
+                        <option value="8">Август</option>
+                        <option value="9">Сентябрь</option>
+                        <option value="10">Октябрь</option>
+                        <option value="11">Ноябрь</option>
+                        <option value="12">Декабрь</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-top: 15px; text-align: center;">
+                <button class="btn-save" onclick="closeCalendarModal()" style="margin-top: 0;">Готово</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- КНОПКА КАЛЕНДАРЯ -->
+    <button class="calendar-btn-bottom" onclick="openCalendarModal()" title="Открыть календарь">📊</button>
+
+    <script>
+        let db;
+        let history = [];
+        let editingId = null;
+        let pendingDeleteId = null;
+
+        // Инициализация IndexedDB
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('FuelCalculatorDB', 1);
+                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    loadHistory();
+                    resolve();
+                };
+                
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('refills')) {
+                        db.createObjectStore('refills', { keyPath: 'id' });
+                    }
+                };
+            });
+        }
+
+        // Загрузить историю из IndexedDB
+        function loadHistory() {
+            const transaction = db.transaction(['refills'], 'readonly');
+            const store = transaction.objectStore('refills');
+            const request = store.getAll();
+            
+            request.onsuccess = () => {
+                history = request.result.sort((a, b) => b.id - a.id);
+                renderHistory();
+                updateStats();
+                fillYearSelect();
+                updateChart();
+                
+                // Инициализируем селекторы модального окна СЕЙЧАС, когда история загружена
+                initializeModalSelectors();
+            };
+        }
+
+        // Инициализировать селекторы в модальном окне
+        function initializeModalSelectors() {
+            const years = new Set();
+            history.forEach(item => {
+                try {
+                    const parts = item.date.split(',')[0].split('.');
+                    const year = parseInt(parts[2]);
+                    if (!isNaN(year)) {
+                        years.add(year);
+                    }
+                } catch (e) {
+                    console.error('Ошибка парсинга года:', item.date);
+                }
+            });
+            
+            const modalYearSelect = document.getElementById('modalYearSelect');
+            if (!modalYearSelect) {
+                console.error('modalYearSelect не найден!');
+                return;
+            }
+            
+            // Очищаю старые опции кроме "Все года"
+            const oldOptions = modalYearSelect.querySelectorAll('option:not([value=""])');
+            oldOptions.forEach(opt => opt.remove());
+            
+            // Добавляю новые опции
+            const sortedYears = Array.from(years).sort((a, b) => b - a);
+            sortedYears.forEach(year => {
+                if (!isNaN(year)) {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    modalYearSelect.appendChild(option);
+                }
+            });
+            
+            // Устанавливаем селектор на текущий год
+            modalYearSelect.value = historyFilterYear;
+            
+            console.log('Селектор инициализирован. Текущий год установлен на:', historyFilterYear);
+            console.log('Доступные года:', Array.from(years));
+        }
+
+        // Сохранить запись в IndexedDB
+        function saveEntry(entry) {
+            const transaction = db.transaction(['refills'], 'readwrite');
+            const store = transaction.objectStore('refills');
+            store.add(entry);
+            
+            transaction.oncomplete = () => {
+                loadHistory();
+            };
+        }
+
+        // Обновить запись в IndexedDB
+        function updateEntry(entry) {
+            const transaction = db.transaction(['refills'], 'readwrite');
+            const store = transaction.objectStore('refills');
+            store.put(entry);
+            
+            transaction.oncomplete = () => {
+                loadHistory();
+                updateStats();
+            };
+        }
+
+        // Удалить запись
+        function deleteEntry(id) {
+            if (!confirm('Удалить эту заправку?')) {
+                return;
+            }
+            const transaction = db.transaction(['refills'], 'readwrite');
+            const store = transaction.objectStore('refills');
+            store.delete(id);
+            
+            transaction.oncomplete = () => {
+                loadHistory();
+                updateStats();
+            };
+        }
+
+        // Отменить редактирование
+        function cancelEdit() {
+            editingId = null;
+            document.getElementById('cancelEditBtn').style.display = 'none';
+            document.getElementById('saveBtn').textContent = '💾 Сохранить';
+            clearInputs();
+        }
+
+        // Редактировать запись
+        function editEntry(id) {
+            const entry = history.find(item => item.id === id);
+            if (!entry) return;
+            
+            editingId = id;
+            document.getElementById('price').value = entry.price;
+            document.getElementById('volume').value = entry.volume;
+            document.getElementById('mileage').value = entry.mileage || '';
+            calculate();
+            
+            // Показываем кнопку отмены
+            document.getElementById('cancelEditBtn').style.display = 'block';
+            document.getElementById('saveBtn').textContent = '✏️ Обновить';
+            
+            document.querySelector('.calculator-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Очистить всё
+        function clearAllHistory() {
+            if (!db) {
+                alert('База не инициализирована!');
+                return;
+            }
+            const transaction = db.transaction(['refills'], 'readwrite');
+            const store = transaction.objectStore('refills');
+            store.clear();
+            
+            transaction.oncomplete = () => {
+                history = [];
+                renderHistory();
+                updateStats();
+            };
+        }
+
+        // Расчёт цены
+        function calculate() {
+            const price = parseFloat(document.getElementById('price').value) || 0;
+            const volume = parseFloat(document.getElementById('volume').value) || 0;
+            const totalWithTax = price * volume;
+            const totalWithoutTax = totalWithTax / 1.24;
+            const tax = totalWithTax - totalWithoutTax;
+
+            document.getElementById('priceWithTax').textContent = totalWithTax.toFixed(2) + ' €';
+            document.getElementById('taxAmount').textContent = tax.toFixed(2) + ' €';
+            document.getElementById('priceWithoutTax').textContent = (price / 1.24).toFixed(2) + ' €/L';
+            document.getElementById('totalPrice').textContent = totalWithTax.toFixed(2) + ' €';
+        }
+
+        // Сохранить в историю
+        function saveToHistory() {
+            const price = parseFloat(document.getElementById('price').value);
+            const volume = parseFloat(document.getElementById('volume').value);
+            const mileage = parseFloat(document.getElementById('mileage').value);
+
+            if (!price || !volume) {
+                alert('Заполни цену и литры!');
+                return;
+            }
+
+            const totalWithTax = price * volume;
+            const totalWithoutTax = totalWithTax / 1.24;
+
+            const entry = {
+                id: editingId || Date.now(),
+                date: editingId ? history.find(e => e.id === editingId).date : new Date().toLocaleString('ru-RU'),
+                price: price.toFixed(2),
+                volume: volume.toFixed(1),
+                mileage: mileage || 0,
+                totalWithTax: totalWithTax.toFixed(2),
+                totalWithoutTax: totalWithoutTax.toFixed(2)
+            };
+
+            if (editingId) {
+                // Обновляем существующую запись
+                updateEntry(entry);
+                editingId = null;
+                document.getElementById('cancelEditBtn').style.display = 'none';
+                document.getElementById('saveBtn').textContent = '💾 Сохранить';
+            } else {
+                // Сохраняем новую
+                saveEntry(entry);
+            }
+            
+            clearInputs();
+        }
+
+        // Отобразить историю
+        function renderHistory() {
+            const container = document.getElementById('historyContainer');
+            const clearBtn = document.getElementById('clearAllBtn');
+
+            // Считаем rangeDate для фильтрации по кнопкам периода
+            let rangeDate = null;
+            if (!historyFilterYear && !historyFilterMonth && currentRange !== 'all') {
+                rangeDate = new Date();
+                switch(currentRange) {
+                    case '1d': rangeDate.setDate(rangeDate.getDate() - 1); break;
+                    case '7d': rangeDate.setDate(rangeDate.getDate() - 7); break;
+                    case '1m': rangeDate.setMonth(rangeDate.getMonth() - 1); break;
+                    case '3m': rangeDate.setMonth(rangeDate.getMonth() - 3); break;
+                    case '6m': rangeDate.setMonth(rangeDate.getMonth() - 6); break;
+                    case '1y': rangeDate.setFullYear(rangeDate.getFullYear() - 1); break;
+                    case '2y': rangeDate.setFullYear(rangeDate.getFullYear() - 2); break;
+                }
+            }
+
+            // Фильтруем историю
+            let filteredHistory = history.filter(item => {
+                try {
+                    const parts = item.date.split(',')[0].split('.');
+                    const itemYear = parseInt(parts[2]);
+                    const itemMonth = parseInt(parts[1]);
+                    const itemDay = parseInt(parts[0]);
+
+                    if (historyFilterYear && itemYear !== parseInt(historyFilterYear)) return false;
+                    if (historyFilterMonth && itemMonth !== parseInt(historyFilterMonth)) return false;
+
+                    if (rangeDate) {
+                        const itemDate = new Date(itemYear, itemMonth - 1, itemDay);
+                        if (itemDate < rangeDate) return false;
+                    }
+
+                    return true;
+                } catch (e) {
+                    console.error('Ошибка парсинга:', item.date, e);
+                    return false;
+                }
+            });
+
+            if (filteredHistory.length === 0) {
+                let emptyMsg;
+                if (!historyFilterYear && !historyFilterMonth) {
+                    emptyMsg = `Истории ещё нет. Сохраняй заправки — они появятся здесь 👇`;
+                } else {
+                    const yearText = historyFilterMonth ? 
+                        `за ${historyFilterMonth} месяц ${historyFilterYear} года` : 
+                        `за ${historyFilterYear} год`;
+                    emptyMsg = `История ${yearText} пуста. Выбери другой период в календаре 📊`;
+                }
+                
+                container.innerHTML = `<div class="history-empty">${emptyMsg}</div>`;
+                clearBtn.style.display = 'none';
+                return;
+            }
+
+            clearBtn.style.display = 'block';
+            container.innerHTML = filteredHistory.map((item, index) => {
+                let consumptionHTML = '';
+                
+                // Ищем индекс в оригинальной истории для правильного подсчёта расхода
+                const originalIndex = history.indexOf(item);
+                
+                // Предыдущая заправка — всегда index+1 (история от новых к старым)
+                const prevItem = history[originalIndex + 1];
+
+                if (originalIndex === history.length - 1) {
+                    // Самая старая запись — точка отсчёта, расход не считаем
+                    if (!item.mileage || item.mileage === 0) {
+                        consumptionHTML = `<div class="history-details" style="color: #999;">⚠ Нет расхода</div>`;
+                    }
+                } else if (!item.mileage || item.mileage === 0) {
+                    consumptionHTML = `<div class="history-details" style="color: #999;">⚠ Нет расхода</div>`;
+                } else if (prevItem && prevItem.volume) {
+                    const consumption = ((parseFloat(prevItem.volume) / item.mileage) * 100).toFixed(2);
+                    consumptionHTML = `<div class="history-details">Расход: ${consumption} л/100км (проехал ${item.mileage}км с прошлой заправки)</div>`;
+                }
+                
+                return `
+                    <div class="history-item">
+                        <div class="history-info">
+                            <div class="history-date">${item.date}</div>
+                            <div class="history-details">${item.price} €/L × ${item.volume}L</div>
+                            <div class="history-details">Платил: ${item.totalWithTax} € (НДС ${(item.totalWithTax - item.totalWithoutTax).toFixed(2)} €)</div>
+                            ${consumptionHTML}
+                            <div class="history-cost">Без НДС: ${item.totalWithoutTax} €</div>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="history-delete" onclick="editEntry(${item.id})" style="background: #667eea; padding: 8px 12px; font-size: 14px;">✏️</button>
+                            <button class="history-delete" onclick="deleteEntry(${item.id})">❌</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Обновить статистику
+        function updateStats() {
+            // Считаем rangeDate для фильтрации по кнопкам периода
+            let rangeDate = null;
+            if (!historyFilterYear && !historyFilterMonth && currentRange !== 'all') {
+                rangeDate = new Date();
+                switch(currentRange) {
+                    case '1d': rangeDate.setDate(rangeDate.getDate() - 1); break;
+                    case '7d': rangeDate.setDate(rangeDate.getDate() - 7); break;
+                    case '1m': rangeDate.setMonth(rangeDate.getMonth() - 1); break;
+                    case '3m': rangeDate.setMonth(rangeDate.getMonth() - 3); break;
+                    case '6m': rangeDate.setMonth(rangeDate.getMonth() - 6); break;
+                    case '1y': rangeDate.setFullYear(rangeDate.getFullYear() - 1); break;
+                    case '2y': rangeDate.setFullYear(rangeDate.getFullYear() - 2); break;
+                }
+            }
+
+            // Фильтруем историю
+            let filteredHistory = history.filter(item => {
+                try {
+                    const parts = item.date.split(',')[0].split('.');
+                    const itemYear = parseInt(parts[2]);
+                    const itemMonth = parseInt(parts[1]);
+                    const itemDay = parseInt(parts[0]);
+
+                    if (historyFilterYear && itemYear !== parseInt(historyFilterYear)) return false;
+                    if (historyFilterMonth && itemMonth !== parseInt(historyFilterMonth)) return false;
+
+                    if (rangeDate) {
+                        const itemDate = new Date(itemYear, itemMonth - 1, itemDay);
+                        if (itemDate < rangeDate) return false;
+                    }
+
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            });
+
+            if (filteredHistory.length === 0) {
+                document.getElementById('totalPaid').textContent = '0.00 €';
+                document.getElementById('totalWithoutTax').textContent = '0.00 €';
+                document.getElementById('totalTax').textContent = '0.00 €';
+                document.getElementById('totalRefills').textContent = '0';
+                document.getElementById('totalKm').textContent = '0 км';
+                document.getElementById('avgConsumption').textContent = '— л/100км';
+                return;
+            }
+
+            let totalPaid = 0;
+            let totalTax = 0;
+            let totalKm = 0;
+            let consumptionCount = 0;
+            let totalConsumption = 0;
+
+            filteredHistory.forEach((item, index) => {
+                totalPaid += parseFloat(item.totalWithTax);
+                totalTax += parseFloat(item.totalWithTax) - parseFloat(item.totalWithoutTax);
+                
+                // Ищем индекс в оригинальной истории для правильного расчёта
+                const originalIndex = history.indexOf(item);
+                
+                // Предыдущая заправка — всегда index+1 (история от новых к старым)
+                const prevItem = history[originalIndex + 1];
+
+                if (originalIndex !== history.length - 1 && item.mileage && item.mileage > 0 && prevItem && prevItem.volume) {
+                    const consumption = (parseFloat(prevItem.volume) / item.mileage) * 100;
+                    totalConsumption += consumption;
+                    consumptionCount++;
+                    totalKm += parseFloat(item.mileage);
+                }
+            });
+
+            const totalWithoutTax = totalPaid - totalTax;
+            const avgConsumption = consumptionCount > 0 ? (totalConsumption / consumptionCount).toFixed(2) : '—';
+
+            document.getElementById('totalPaid').textContent = totalPaid.toFixed(2) + ' €';
+            document.getElementById('totalWithoutTax').textContent = totalWithoutTax.toFixed(2) + ' €';
+            document.getElementById('totalTax').textContent = totalTax.toFixed(2) + ' €';
+            document.getElementById('totalRefills').textContent = filteredHistory.length;
+            document.getElementById('totalKm').textContent = totalKm > 0 ? totalKm.toLocaleString('ru-RU') + ' км' : '0 км';
+            document.getElementById('avgConsumption').textContent = avgConsumption + ' л/100км';
+        }
+
+        // Очистить форму
+        function clearInputs() {
+            document.getElementById('price').value = '';
+            document.getElementById('volume').value = '';
+            document.getElementById('mileage').value = '';
+            calculate();
+        }
+
+        // Экспорт
+        function exportData() {
+            const json = JSON.stringify(history, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'fuel_calculator_' + new Date().toISOString().slice(0,10) + '.json';
+            a.click();
+        }
+
+        // Импорт
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const imported = JSON.parse(event.target.result);
+                        if (Array.isArray(imported)) {
+                            const transaction = db.transaction(['refills'], 'readwrite');
+                            const store = transaction.objectStore('refills');
+                            store.clear();
+                            imported.forEach(entry => store.add(entry));
+                            transaction.oncomplete = () => loadHistory();
+                        }
+                    } catch (err) {
+                        alert('Ошибка при импорте!');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        // Подтверждение удаления
+        function confirmClearAll() {
+            if (confirm('Очистить ВСЮ историю?')) {
+                clearAllHistory();
+            }
+        }
+
+        // ===== МОДАЛЬНОЕ ОКНО КАЛЕНДАРЯ =====
+        function openCalendarModal() {
+            document.getElementById('calendarModal').style.display = 'block';
+            // Заполняем селекторы модального окна текущими значениями
+            document.getElementById('modalYearSelect').value = historyFilterYear;
+            document.getElementById('modalMonthSelect').value = historyFilterMonth;
+        }
+
+        function closeCalendarModal() {
+            document.getElementById('calendarModal').style.display = 'none';
+        }
+
+        // Закрыть модаль если кликнул вне её
+        window.onclick = function(event) {
+            const modal = document.getElementById('calendarModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Обновить историю по выбранному году/месяцу
+        function updateHistoryByYear() {
+            const yearSelect = document.getElementById('modalYearSelect');
+            const monthSelect = document.getElementById('modalMonthSelect');
+            
+            const yearVal = yearSelect.value;
+            const monthVal = monthSelect.value;
+            
+            // Устанавливаем фильтр для истории
+            historyFilterYear = yearVal || '';
+            historyFilterMonth = monthVal || '';
+            
+            // СИНХРОНИЗАЦИЯ: обновляем селекторы графика чтобы они совпадали с календарём
+            if (yearVal) {
+                document.getElementById('yearSelect').value = yearVal;
+                selectedYear = yearVal;
+            }
+            if (monthVal) {
+                document.getElementById('monthSelect').value = monthVal;
+                selectedMonth = monthVal;
+            }
+            
+            console.log('DEBUG updateHistoryByYear:');
+            console.log('yearVal:', yearVal);
+            console.log('monthVal:', monthVal);
+            console.log('historyFilterYear установлен на:', historyFilterYear);
+            console.log('historyFilterMonth установлен на:', historyFilterMonth);
+            console.log('selectedYear синхронизирован на:', selectedYear);
+            console.log('selectedMonth синхронизирован на:', selectedMonth);
+            
+            // Вызываем фильтрацию
+            renderHistory();
+            updateStats();
+            updateChart(); // Обновляем граф чтобы он тоже пересчитался!
+        }
+
+        // ===== ГРАФИК И СТАТИСТИКА ПО ПЕРИОДАМ =====
+        let currentRange = 'all';
+        let selectedYear = '';
+        let selectedMonth = '';
+        let selectedDay = '';
+        
+        // Для фильтрации истории (по умолчанию — всё время)
+        let historyFilterYear = '';
+        let historyFilterMonth = '';
+
+        // Заполнить селекторы дней
+        function fillDaySelect() {
+            const daySelect = document.getElementById('daySelect');
+            const month = parseInt(document.getElementById('monthSelect').value) || new Date().getMonth() + 1;
+            const year = parseInt(document.getElementById('yearSelect').value) || new Date().getFullYear();
+            
+            const daysInMonth = new Date(year, month, 0).getDate();
+            daySelect.innerHTML = '<option value="">Все дни</option>';
+            
+            for (let i = 1; i <= daysInMonth; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = i;
+                daySelect.appendChild(option);
+            }
+        }
+
+        // Заполнить селектор лет
+        function fillYearSelect() {
+            const yearSelect = document.getElementById('yearSelect');
+            const years = new Set();
+            
+            history.forEach(item => {
+                try {
+                    // item.date формат: "23.03.2026, 15:22:00" (ru-RU)
+                    const parts = item.date.split(',')[0].split('.');
+                    if (parts.length === 3) {
+                        const year = parseInt(parts[2]); // день.месяц.год
+                        if (!isNaN(year)) {
+                            years.add(year);
+                        }
+                    }
+                } catch (e) {
+                    console.log('Ошибка парсинга даты:', item.date);
+                }
+            });
+
+            const sortedYears = Array.from(years).sort((a, b) => b - a);
+            const currentOptions = yearSelect.querySelectorAll('option:not([value=""])');
+            
+            // Удалю старые опции
+            currentOptions.forEach(opt => opt.remove());
+            
+            // Добавлю новые
+            sortedYears.forEach(year => {
+                if (!isNaN(year)) {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    yearSelect.appendChild(option);
+                }
+            });
+        }
+
+        // Получить данные за период
+        function getDataForPeriod() {
+            let filteredData = [...history];
+            const now = new Date();
+
+            if (currentRange !== 'all') {
+                const rangeDate = new Date();
+                
+                switch(currentRange) {
+                    case '1d':
+                        rangeDate.setDate(rangeDate.getDate() - 1);
+                        break;
+                    case '7d':
+                        rangeDate.setDate(rangeDate.getDate() - 7);
+                        break;
+                    case '1m':
+                        rangeDate.setMonth(rangeDate.getMonth() - 1);
+                        break;
+                    case '3m':
+                        rangeDate.setMonth(rangeDate.getMonth() - 3);
+                        break;
+                    case '6m':
+                        rangeDate.setMonth(rangeDate.getMonth() - 6);
+                        break;
+                    case '1y':
+                        rangeDate.setFullYear(rangeDate.getFullYear() - 1);
+                        break;
+                    case '2y':
+                        rangeDate.setFullYear(rangeDate.getFullYear() - 2);
+                        break;
+                }
+                
+                filteredData = filteredData.filter(item => {
+                    try {
+                        const parts = item.date.split(',')[0].split('.');
+                        const itemDate = new Date(parts[2], parseInt(parts[1]) - 1, parts[0]);
+                        return itemDate >= rangeDate;
+                    } catch (e) {
+                        return false;
+                    }
+                });
+            }
+
+            // Фильтр по году, месяцу, дню
+            if (selectedYear || selectedMonth || selectedDay) {
+                filteredData = filteredData.filter(item => {
+                    try {
+                        const parts = item.date.split(',')[0].split('.');
+                        const itemDay = parseInt(parts[0]);
+                        const itemMonth = parseInt(parts[1]);
+                        const itemYear = parseInt(parts[2]);
+
+                        if (selectedYear && itemYear !== parseInt(selectedYear)) return false;
+                        if (selectedMonth && itemMonth !== parseInt(selectedMonth)) return false;
+                        if (selectedDay && itemDay !== parseInt(selectedDay)) return false;
+
+                        return true;
+                    } catch (e) {
+                        return false;
+                    }
+                });
+            }
+
+            return filteredData;
+        }
+
+        // Группировать данные по дате
+        function groupByDate(data) {
+            const groups = {};
+            
+            data.forEach((item, index) => {
+                try {
+                    // Парсим дату формата "23.03.2026, 15:22:00"
+                    const parts = item.date.split(',')[0].split('.');
+                    const day = parts[0];
+                    const month = parts[1];
+                    const year = parts[2];
+                    const key = `${day}.${month}.${year}`;
+                    
+                    if (!groups[key]) {
+                        groups[key] = {
+                            date: key,
+                            consumption: 0,
+                            volume: 0,
+                            mileage: 0,
+                            count: 0
+                        };
+                    }
+
+                    groups[key].volume += parseFloat(item.volume);
+                    groups[key].count++;
+
+                    // Расход считаем от предыдущей заправки (index+1 = более старая)
+                    if (index !== data.length - 1) {
+                        const prevItem = data[index + 1];
+                        
+                        if (item.mileage && item.mileage > 0 && prevItem && prevItem.volume) {
+                            groups[key].consumption = ((parseFloat(prevItem.volume) / item.mileage) * 100).toFixed(2);
+                            groups[key].mileage = item.mileage;
+                        }
+                    }
+                } catch (e) {
+                    console.log('Ошибка группировки даты:', item.date);
+                }
+            });
+
+            return Object.values(groups);
+        }
+
+        // Получить цвет для расхода
+        function getConsumptionColor(consumption) {
+            const c = parseFloat(consumption);
+            if (c < 7) return 'green';
+            if (c < 9) return 'blue'; // стандартный синий
+            if (c < 11) return 'orange';
+            return 'red';
+        }
+
+        // Синхронизировать селекторы статистики с фильтром истории
+        function onPeriodSelectChange() {
+            const yearVal = document.getElementById('yearSelect').value;
+            const monthVal = document.getElementById('monthSelect').value;
+
+            // Обновляем фильтр истории
+            historyFilterYear = yearVal || '';
+            historyFilterMonth = monthVal || '';
+
+            // Синхронизируем модальное окно
+            document.getElementById('modalYearSelect').value = historyFilterYear;
+            document.getElementById('modalMonthSelect').value = historyFilterMonth;
+
+            // Обновляем всё
+            updateChart();
+            renderHistory();
+            updateStats();
+        }
+
+        // Обновить график
+        function updateChart() {
+            selectedYear = document.getElementById('yearSelect').value;
+            selectedMonth = document.getElementById('monthSelect').value;
+            selectedDay = document.getElementById('daySelect').value;
+
+            const periodData = getDataForPeriod();
+            const groupedData = groupByDate(periodData);
+
+            if (groupedData.length === 0) {
+                document.getElementById('chart').innerHTML = '<div style="color: #999; margin: auto;">Нет данных за этот период</div>';
+                document.getElementById('periodStats').innerHTML = '';
+                return;
+            }
+
+            // Лимит на количество столбцов в графике
+            let displayData = groupedData;
+            if (displayData.length > 31) {
+                // Если больше 31 - группируем по неделям
+                const weekly = {};
+                displayData.forEach(item => {
+                    const date = new Date(item.date.split('.').reverse().join('-'));
+                    const week = Math.floor(date.getDate() / 7);
+                    const key = `W${week + 1}`;
+                    
+                    if (!weekly[key]) {
+                        weekly[key] = { consumption: 0, count: 0, date: key };
+                    }
+                    weekly[key].consumption += parseFloat(item.consumption || 0);
+                    weekly[key].count++;
+                });
+                displayData = Object.values(weekly);
+            }
+
+            // Найти макс для масштабирования
+            const maxConsumption = Math.max(...displayData.map(d => parseFloat(d.consumption || 0))) || 1;
+
+            // Построить график
+            const chartHTML = displayData.map(item => {
+                const consumption = parseFloat(item.consumption || 0);
+                const height = (consumption / maxConsumption) * 100;
+                const color = getConsumptionColor(consumption);
+                
+                return `
+                    <div class="chart-bar">
+                        <div class="bar ${color}" style="height: ${Math.max(height, 5)}%;">
+                            <div class="bar-tooltip">${consumption.toFixed(2)} л/100км</div>
+                        </div>
+                        <div class="bar-label">${item.date}</div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('chart').innerHTML = chartHTML;
+
+            // Статистика за период
+            let totalVolume = 0;
+            let totalConsumption = 0;
+            let consumptionCount = 0;
+            let totalMileage = 0;
+
+            groupedData.forEach(item => {
+                totalVolume += item.volume;
+                if (item.consumption && item.consumption > 0) {
+                    totalConsumption += parseFloat(item.consumption);
+                    consumptionCount++;
+                }
+                totalMileage += item.mileage;
+            });
+
+            const avgConsumption = consumptionCount > 0 ? (totalConsumption / consumptionCount).toFixed(2) : '—';
+
+            const statsHTML = `
+                <div class="period-stats-row">
+                    <span class="period-stats-label">Заправок за период:</span>
+                    <span class="period-stats-value">${periodData.length} шт</span>
+                </div>
+                <div class="period-stats-row">
+                    <span class="period-stats-label">Всего литров:</span>
+                    <span class="period-stats-value">${totalVolume.toFixed(1)} л</span>
+                </div>
+                <div class="period-stats-row">
+                    <span class="period-stats-label">Средний расход:</span>
+                    <span class="period-stats-value">${avgConsumption} л/100км</span>
+                </div>
+                <div class="period-stats-row">
+                    <span class="period-stats-label">Проехал:</span>
+                    <span class="period-stats-value">${totalMileage.toLocaleString('ru-RU')} км</span>
+                </div>
+                <div class="period-stats-row">
+                    <span class="period-stats-label">Потрачено:</span>
+                    <span class="period-stats-value">${periodData.reduce((sum, item) => sum + parseFloat(item.totalWithTax), 0).toFixed(2)} €</span>
+                </div>
+            `;
+
+            document.getElementById('periodStats').innerHTML = statsHTML;
+        }
+
+        // Быстрый выбор периода
+        function setRange(range) {
+            currentRange = range;
+            
+            // Обновить визуально активную кнопку
+            document.querySelectorAll('.range-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Очистить селекторы статистики
+            document.getElementById('yearSelect').value = '';
+            document.getElementById('monthSelect').value = '';
+            document.getElementById('daySelect').value = '';
+
+            // Сбрасываем фильтр истории заправок — показываем всё
+            historyFilterYear = '';
+            historyFilterMonth = '';
+
+            // Обновляем всё: график, историю, статистику
+            updateChart();
+            renderHistory();
+            updateStats();
+        }
+
+        // Инициализация
+        window.onload = async () => {
+            await initDB();
+            calculate();
+            
+            // Сначала загружаем историю из БД
+            loadHistory();
+            
+            // Инициализируем селекторы только после загрузки истории
+            // Но БЕЗ setTimeout - это может быть причиной проблем!
+            // setTimeout вызывает асинхронность которая ломает селектор
+            
+            // Вместо этого вызываем напрямую в loadHistory callback
+            
+            // Регистрируем Service Worker для PWA
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registration = await navigator.serviceWorker.register('./sw.js');
+                    console.log('Service Worker зарегистрирован:', registration);
+                } catch (error) {
+                    console.log('Ошибка регистрации Service Worker:', error);
+                }
+            }
+        };
+    </script>
+</body>
+</html>
