@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fuel-calculator-v2.5';
+const CACHE_NAME = 'fuel-calculator-v2.6';
 const urlsToCache = [
   './',
   './index.html',
