@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Video Poker v2.1</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { width:100%; height:100%; overflow:hidden; background:radial-gradient(ellipse at center,#2d1810 0%,#0a0a0a 100%); font-family:'Courier Prime',monospace; touch-action:manipulation; }
+
+.app { width:100vw; height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:8px; }
+
+.machine {
+  width:100%; max-width:520px;
+  background:linear-gradient(180deg,#7a4520 0%,#5c3317 40%,#3d1f0a 100%);
+  border-radius:18px; padding:10px;
+  box-shadow:0 0 0 2px #d4af37,0 0 0 5px #5c3317,0 0 40px rgba(212,175,55,.3),0 20px 60px rgba(0,0,0,.8);
+  display:flex; flex-direction:column; gap:8px;
+}
+
+/* SIGN */
+.sign { background:linear-gradient(135deg,#1a0a00,#3d1f0a); border:1.5px solid #d4af37; border-radius:8px; padding:6px 12px 4px; text-align:center; }
+.sign-title { font-family:'Playfair Display',serif; font-size:clamp(16px,5vw,24px); font-weight:900; color:#d4af37; letter-spacing:3px; animation:glow 2s ease-in-out infinite alternate; }
+.sign-sub { font-size:clamp(8px,2.5vw,10px); color:#a08030; letter-spacing:4px; margin-top:1px; }
+@keyframes glow { from{text-shadow:0 0 8px rgba(212,175,55,.5)} to{text-shadow:0 0 20px rgba(212,175,55,1),0 0 40px rgba(212,175,55,.4)} }
+
+/* SCREEN */
+.screen { background:radial-gradient(ellipse at 50% 30%,#22854a 0%,#1a6b3a 50%,#0f4425 100%); border-radius:8px; border:2px solid #0a2a14; box-shadow:inset 0 0 30px rgba(0,0,0,.5); padding:8px 8px 10px; display:flex; flex-direction:column; gap:6px; position:relative; overflow:hidden; }
+.screen::before { content:''; position:absolute; inset:0; background:url("data:image/svg+xml,%3Csvg width='4' height='4' viewBox='0 0 4 4' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 3h1v1H1V3zm2-2h1v1H3V1z' fill='%23000' fill-opacity='0.04'/%3E%3C/svg%3E"); pointer-events:none; border-radius:6px; }
+
+/* PAYTABLE */
+.paytable { background:rgba(0,0,0,.35); border:1px solid rgba(212,175,55,.2); border-radius:6px; padding:5px 8px; }
+.pt-title { font-size:9px; color:#a0c080; letter-spacing:3px; text-align:center; margin-bottom:4px; }
+.pt-grid { display:grid; grid-template-columns:1fr repeat(5,28px); gap:1.5px 4px; font-size:clamp(8px,2.5vw,11px); }
+.pt-name { color:#d4c090; white-space:nowrap; }
+.pt-val  { color:#888; text-align:center; padding:1px 2px; border-radius:3px; font-size:clamp(8px,2.5vw,10px); }
+.pt-val.hi { background:rgba(212,175,55,.2); color:#f0d060; font-weight:700; }
+.pt-hdr { color:#607850; font-size:8px; text-align:center; }
+
+/* HAND NAME */
+.hand-display { text-align:center; min-height:26px; display:flex; align-items:center; justify-content:center; }
+.hand-name { font-family:'Playfair Display',serif; font-size:clamp(14px,5vw,20px); color:#f0d060; text-shadow:0 0 12px rgba(240,208,96,.8); letter-spacing:2px; display:inline-block; }
+.hand-name.pop { animation:handPop .35s cubic-bezier(.34,1.56,.64,1); }
+@keyframes handPop { from{transform:scale(.5);opacity:0} to{transform:scale(1);opacity:1} }
+
+/* CARDS ROW */
+.cards-row { display:flex; gap:clamp(4px,2vw,10px); justify-content:center; align-items:flex-end; }
+.card-wrap { display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; max-width:100px; }
+
+/* FLIP */
+.card-flip { width:100%; aspect-ratio:63/88; perspective:1000px; cursor:pointer; }
+.card-inner { width:100%; height:100%; position:relative; transform-style:preserve-3d; transition:transform 0.4s ease; border-radius:7px; }
+.card-flip.face-down .card-inner { transform:rotateY(180deg); }
+
+.card-face, .card-back-face {
+  position:absolute; inset:0; border-radius:7px; width:100%; height:100%;
+  backface-visibility:hidden; -webkit-backface-visibility:hidden;
+}
+.card-back-face { transform:rotateY(180deg); }
+
+.card-face {
+  background:#fdfaf0; border:1.5px solid #c8b89a;
+  box-shadow:2px 3px 8px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.9);
+  display:flex; align-items:center; justify-content:center; user-select:none;
+}
+.card-corner { position:absolute; display:flex; flex-direction:column; align-items:center; line-height:1; }
+.card-corner.tl { top:4px; left:5px; }
+.card-corner.br { bottom:4px; right:5px; transform:rotate(180deg); }
+.c-rank { font-family:'Playfair Display',serif; font-size:clamp(11px,4vw,17px); font-weight:700; line-height:1; }
+.c-ss   { font-size:clamp(9px,3vw,12px); line-height:1; }
+.c-sc   { font-size:clamp(20px,7vw,32px); }
+.red .c-rank,.red .c-ss,.red .c-sc { color:#cc2020; }
+.blk .c-rank,.blk .c-ss,.blk .c-sc { color:#1a1a1a; }
+.joker { background: linear-gradient(135deg,#f8f0ff 0%,#eeddf8 50%,#f8f0ff 100%) !important; border-color:#b060e0 !important; box-shadow:0 0 12px rgba(160,60,220,.4),2px 3px 8px rgba(0,0,0,.4) !important; }
+
+.card-back-face {
+  background:linear-gradient(135deg,#1a3a6b 0%,#2244aa 50%,#1a3a6b 100%);
+  border:1.5px solid #0a2a14;
+  box-shadow:2px 3px 8px rgba(0,0,0,.4),inset 0 -1px 0 rgba(255,255,255,.1);
+  display:flex; align-items:center; justify-content:center; flex-direction:column; gap:4px;
+  font-size:clamp(28px,10vw,44px); color:rgba(255,255,255,.3);
+  position:relative; overflow:hidden;
+}
+.card-back-face::before {
+  content:''; position:absolute; inset:3px; border:1px dashed rgba(255,255,255,.15); border-radius:4px;
+}
+.card-back-face::after {
+  content:''; position:absolute; inset:0; background:repeating-linear-gradient(45deg,transparent,transparent 2px,rgba(0,0,0,.1) 2px,rgba(0,0,0,.1) 4px);
+}
+
+.card-wrap.held .card-flip { transform:translateY(-8px); }
+.card-wrap.held .card-face { box-shadow:0 0 0 2.5px #f0d060,2px 3px 8px rgba(0,0,0,.4); }
+
+.hold-lbl { font-size:clamp(8px,2.5vw,10px); font-weight:700; letter-spacing:2px; height:16px; display:flex; align-items:center; transition:all .15s; }
+.hold-lbl.on { color:#1a0a00; background:#f0d060; padding:0 6px; border-radius:3px; box-shadow:0 0 6px rgba(240,208,96,.6); }
+.hold-lbl.off { color:transparent; }
+
+/* INFO */
+.info-row { display:flex; justify-content:space-between; align-items:center; gap:6px; }
+.info-box { background:rgba(0,0,0,.4); border:1px solid rgba(212,175,55,.3); border-radius:6px; padding:4px 10px; text-align:center; flex:1; }
+.info-lbl { font-size:8px; color:#a0c080; letter-spacing:2px; text-transform:uppercase; }
+.info-val { font-family:'Playfair Display',serif; font-size:clamp(14px,5vw,20px); color:#f0d060; font-weight:700; line-height:1.2; }
+.info-val.flash { animation:numFlash .5s ease; }
+@keyframes numFlash { 0%,100%{color:#f0d060} 50%{color:#fff;text-shadow:0 0 15px #fff} }
+
+/* BET */
+.bet-row { display:flex; gap:5px; justify-content:center; }
+.bet-btn { flex:1; background:linear-gradient(180deg,#3a2010,#2a1508); border:1px solid #d4af37; color:#d4af37; font-family:'Courier Prime',monospace; font-size:clamp(10px,3.5vw,13px); font-weight:700; padding:5px 2px; border-radius:5px; cursor:pointer; transition:all .15s; }
+.bet-btn:active { transform:scale(.95); }
+.bet-btn.active { background:linear-gradient(180deg,#d4af37,#a08030); color:#1a0a00; box-shadow:0 0 8px rgba(212,175,55,.5); }
+
+/* DEAL BTN */
+.btn-deal { width:100%; font-family:'Playfair Display',serif; font-size:clamp(14px,5vw,18px); font-weight:700; padding:10px; border-radius:8px; border:none; cursor:pointer; background:linear-gradient(180deg,#f0d060 0%,#c8900a 100%); color:#1a0a00; letter-spacing:1px; text-transform:uppercase; box-shadow:0 4px 0 #805000,0 6px 10px rgba(0,0,0,.4); transition:all .15s; user-select:none; }
+.btn-deal:active { transform:translateY(2px); box-shadow:0 2px 0 #805000; }
+.btn-deal:disabled { background:linear-gradient(180deg,#888,#555); color:#333; box-shadow:0 4px 0 #333; }
+
+/* MSG */
+.message { font-size:clamp(10px,3vw,12px); color:#80c080; text-align:center; height:32px; line-height:16px; letter-spacing:1px; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+
+/* WIN FLASH */
+.win-flash { position:absolute; inset:0; border-radius:6px; pointer-events:none; opacity:0; }
+.win-flash.go { animation:wf .6s ease forwards; }
+@keyframes wf { 0%{opacity:0;background:rgba(240,208,96,0)} 30%{opacity:1;background:rgba(240,208,96,.15)} 100%{opacity:0;background:rgba(240,208,96,0)} }
+
+/* COINS */
+.coin { position:fixed; font-size:22px; pointer-events:none; z-index:200; animation:coinFall 1s ease forwards; }
+@keyframes coinFall { 0%{transform:translateY(0) rotate(0);opacity:1} 100%{transform:translateY(180px) rotate(720deg);opacity:0} }
+
+/* BOTTOM */
+.bottom-bar { background:linear-gradient(180deg,#5c3317,#3d1f0a); border-top:1.5px solid #d4af37; border-radius:0 0 10px 10px; padding:5px 14px; display:flex; justify-content:space-between; align-items:center; font-size:9px; color:#806040; letter-spacing:1px; }
+.led { width:7px;height:7px;border-radius:50%;background:#22cc44;box-shadow:0 0 5px #22cc44;display:inline-block;margin-right:3px;animation:blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* LANDSCAPE */
+@media (orientation:landscape) and (max-height:500px) {
+  .app { padding:4px; }
+  .machine { max-width:none; flex-direction:row; gap:6px; padding:6px; border-radius:12px; align-items:stretch; }
+  .sign { display:flex; flex-direction:column; justify-content:center; min-width:38px; max-width:42px; padding:6px 4px; border-radius:6px; }
+  .sign-title { font-size:12px; writing-mode:vertical-rl; text-orientation:mixed; letter-spacing:2px; white-space:nowrap; }
+  .sign-sub { display:none; }
+  .screen { flex:1; gap:4px; padding:6px; }
+  .paytable { display:none; }
+  .bottom-bar { display:none; }
+  .cards-row { gap:5px; }
+  .info-row { gap:4px; }
+  .info-box { padding:3px 6px; }
+  .info-val { font-size:15px; }
+  .bet-btn { font-size:11px; padding:4px 2px; }
+  .btn-deal { padding:7px; font-size:13px; }
+  .message { font-size:10px; min-height:14px; }
+  .hand-display { min-height:20px; }
+  .hand-name { font-size:14px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="machine">
+  <div class="sign">
+    <div class="sign-title">♠ VIDEO POKER ♥</div>
+    <div class="sign-sub">JOKER POKER · 54 КАРТЫ</div>
+  </div>
+
+  <div class="screen">
+    <div class="paytable">
+      <div class="pt-title">💰 ТАБЛИЦА ВЫПЛАТ</div>
+      <div class="pt-grid">
+        <div class="pt-name">Комбинация</div>
+        <div class="pt-hdr">x1</div>
+        <div class="pt-hdr">x10</div>
+        <div class="pt-hdr">x50</div>
+        <div class="pt-hdr">x100</div>
+        <div class="pt-hdr">x1000</div>
+        
+        <div class="pt-name">5 Одинаков</div>
+        <div class="pt-val hi" id="pval-five">500</div>
+        <div class="pt-val hi" id="pval-five">5 000</div>
+        <div class="pt-val hi" id="pval-five">25 000</div>
+        <div class="pt-val hi" id="pval-five">50 000</div>
+        <div class="pt-val hi" id="pval-five">500 000</div>
+
+        <div class="pt-name">Роял Флэш</div>
+        <div class="pt-val" id="pval-royal">250</div>
+        <div class="pt-val" id="pval-royal">2500</div>
+        <div class="pt-val" id="pval-royal">12500</div>
+        <div class="pt-val" id="pval-royal">25000</div>
+        <div class="pt-val hi" id="pval-royal">250000</div>
+
+        <div class="pt-name">Стрит Флэш</div>
+        <div class="pt-val" id="pval-sflush">50</div>
+        <div class="pt-val" id="pval-sflush">500</div>
+        <div class="pt-val" id="pval-sflush">2500</div>
+        <div class="pt-val" id="pval-sflush">5000</div>
+        <div class="pt-val" id="pval-sflush">50000</div>
+
+        <div class="pt-name">Каре</div>
+        <div class="pt-val" id="pval-quads">25</div>
+        <div class="pt-val" id="pval-quads">250</div>
+        <div class="pt-val" id="pval-quads">1250</div>
+        <div class="pt-val" id="pval-quads">2500</div>
+        <div class="pt-val" id="pval-quads">25000</div>
+
+        <div class="pt-name">Фулл Хаус</div>
+        <div class="pt-val" id="pval-fh">9</div>
+        <div class="pt-val" id="pval-fh">90</div>
+        <div class="pt-val" id="pval-fh">450</div>
+        <div class="pt-val" id="pval-fh">900</div>
+        <div class="pt-val" id="pval-fh">9000</div>
+
+        <div class="pt-name">Флэш</div>
+        <div class="pt-val" id="pval-flush">5</div>
+        <div class="pt-val" id="pval-flush">50</div>
+        <div class="pt-val" id="pval-flush">250</div>
+        <div class="pt-val" id="pval-flush">500</div>
+        <div class="pt-val" id="pval-flush">5000</div>
+
+        <div class="pt-name">Стрит</div>
+        <div class="pt-val" id="pval-str">4</div>
+        <div class="pt-val" id="pval-str">40</div>
+        <div class="pt-val" id="pval-str">200</div>
+        <div class="pt-val" id="pval-str">400</div>
+        <div class="pt-val" id="pval-str">4000</div>
+
+        <div class="pt-name">Тройка</div>
+        <div class="pt-val" id="pval-three">3</div>
+        <div class="pt-val" id="pval-three">30</div>
+        <div class="pt-val" id="pval-three">150</div>
+        <div class="pt-val" id="pval-three">300</div>
+        <div class="pt-val" id="pval-three">3000</div>
+
+        <div class="pt-name">Две пары</div>
+        <div class="pt-val" id="pval-twopair">2</div>
+        <div class="pt-val" id="pval-twopair">20</div>
+        <div class="pt-val" id="pval-twopair">100</div>
+        <div class="pt-val" id="pval-twopair">200</div>
+        <div class="pt-val" id="pval-twopair">2000</div>
+
+        <div class="pt-name">Пара (J+)</div>
+        <div class="pt-val hi" id="pval-jacks">1</div>
+        <div class="pt-val" id="pval-jacks">10</div>
+        <div class="pt-val" id="pval-jacks">50</div>
+        <div class="pt-val" id="pval-jacks">100</div>
+        <div class="pt-val" id="pval-jacks">1000</div>
+      </div>
+    </div>
+
+    <div class="hand-display"><div class="hand-name" id="handName"></div></div>
+
+    <div class="cards-row" id="cardsRow"></div>
+
+    <div class="info-row">
+      <div class="info-box">
+        <div class="info-lbl">Баланс</div>
+        <div class="info-val" id="balance">0</div>
+      </div>
+      <div class="info-box">
+        <div class="info-lbl">Ставка</div>
+        <div class="info-val" id="bet">0</div>
+      </div>
+      <div class="info-box">
+        <div class="info-lbl">Выигрыш</div>
+        <div class="info-val" id="winDisp">0</div>
+        <div class="win-flash" id="winFlash"></div>
+      </div>
+    </div>
+
+    <div class="message" id="msg">👋 Выберите ставку и играйте!</div>
+  </div>
+
+  <div class="bet-row" id="betRow">
+    <button class="bet-btn" data-bet="1">x1</button>
+    <button class="bet-btn" data-bet="10">x10</button>
+    <button class="bet-btn" data-bet="50">x50</button>
+    <button class="bet-btn" data-bet="100">x100</button>
+    <button class="bet-btn" data-bet="1000">x1000</button>
+  </div>
+
+  <button class="btn-deal" id="dealBtn">РАЗДАЧА</button>
+</div>
+</div>
+
+<div class="bottom-bar">
+  <span><span class="led"></span>LIVE</span>
+  <span id="stats">0 игр · 0 выигрышей</span>
+</div>
+
+<script>
+const RVAL={2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,J:11,Q:12,K:13,A:14};
+const ICONS={royal:'♔',jroyal:'♔',sflush:'⬆',quads:'◆',fh:'⊕',flush:'≈',str:'→',three:'△',twopair:'◇',jacks:'♠'};
+const HANDS=[
+  {key:'jacks',label:'Пара (J+)',mult:1},
+  {key:'twopair',label:'Две пары',mult:2},
+  {key:'three',label:'Тройка',mult:3},
+  {key:'str',label:'Стрит',mult:4},
+  {key:'flush',label:'Флэш',mult:5},
+  {key:'fh',label:'Фулл Хаус',mult:9},
+  {key:'quads',label:'Каре',mult:25},
+  {key:'sflush',label:'Стрит Флэш',mult:50},
+  {key:'royal',label:'Роял Флэш',mult:250},
+  {key:'jroyal',label:'Роял с джокером',mult:250},
+  {key:'five',label:'5 ОДИНАКОВЫХ!!!',mult:500}
+];
+
+let balance=0, bet=0, hand=[], held=[false,false,false,false,false], gameState='bet', gamesPlayed=0, gamesWon=0;
+let dbInitialized=false; // Флаг чтобы loadState вызывалась только один раз
+let dbPromise=null;
+
+// ===================== IndexedDB =====================
+function initDB(){
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open('PokerDB',1);
+    req.onerror=()=>reject(req.error);
+    req.onsuccess=()=>resolve(req.result);
+    req.onupgradeneeded=(e)=>{
+      const db=e.target.result;
+      if(!db.objectStoreNames.contains('state')){
+        db.createObjectStore('state',{keyPath:'key'});
+      }
+    };
+  });
+}
+
+async function loadState(){
+  if(dbInitialized) return; // Уже загружено, не загружаем снова!
+  dbInitialized=true;
+  
+  try{
+    const db=await initDB();
+    const tx=db.transaction('state','readonly');
+    const store=tx.objectStore('state');
+    return new Promise((resolve)=>{
+      const req=store.get('gameState');
+      req.onsuccess=()=>{
+        const data=req.result;
+        console.log('📂 Данные из БД:', data);
+        if(data && typeof data.balance === 'number'){
+          console.log('✅ Баланс загружен из БД:', data.balance);
+          balance=data.balance;
+          gamesPlayed=data.gamesPlayed||0;
+          gamesWon=data.gamesWon||0;
+        } else {
+          console.log('⚠️ Нет данных в БД, используем default 10000');
+          balance=10000;
+        }
+        resolve();
+      };
+      req.onerror=()=>{
+        console.log('❌ Ошибка при загрузке из БД');
+        balance=10000;
+        resolve();
+      };
+    });
+  }catch(e){console.log('DB load failed', e); balance=10000;}
+}
+
+async function saveState(){
+  try{
+    console.log('💾 Сохраняем в БД:', {balance, gamesPlayed, gamesWon});
+    const db=await initDB();
+    const tx=db.transaction('state','readwrite');
+    const store=tx.objectStore('state');
+    store.put({key:'gameState',balance,gamesPlayed,gamesWon});
+  }catch(e){console.log('DB save failed', e);}
+}
+
+// ===================== RENDER =====================
+function renderCards(faceDown, cardArr){
+  const row=document.getElementById('cardsRow');
+  row.innerHTML='';
+  for(let i=0;i<5;i++){
+    const c=cardArr[i]||{r:'?',s:'♠'};
+    const wrap=document.createElement('div');
+    wrap.className='card-wrap'+(held[i]?' held':'');
+    // Если карта выбрана (held), не переворачиваем её, только если НЕ выбрана
+    const shouldFlip = faceDown[i] && !held[i];
+    wrap.innerHTML=`
+      <div class="card-flip ${shouldFlip?'face-down':''}">
+        <div class="card-inner">
+          <div class="card-face ${c.s==='♥'||c.s==='♦'?'red':'blk'} ${c.r==='JKR'?'joker':''}">
+            ${c.r==='?'?'?':''}
+            ${c.r!=='?'?`
+              <div class="card-corner tl">
+                <div class="c-rank">${c.r==='JKR'?'🃏':c.r}</div>
+                <div class="c-ss">${c.s}</div>
+              </div>
+              <div class="c-sc">${c.s}</div>
+              <div class="card-corner br">
+                <div class="c-rank">${c.r==='JKR'?'🃏':c.r}</div>
+                <div class="c-ss">${c.s}</div>
+              </div>
+            `:''}
+          </div>
+          <div class="card-back-face">🂠</div>
+        </div>
+      </div>
+      <div class="hold-lbl ${held[i]?'on':'off'}">HOLD</div>
+    `;
+    wrap.onclick=()=>{
+      if(gameState==='hold'){ held[i]=!held[i]; renderCards([false,false,false,false,false],hand); }
+    };
+    row.appendChild(wrap);
+  }
+}
+
+function highlightPT(key=null){
+  document.querySelectorAll('[id^="pval-"]').forEach(e=>e.style.background='');
+  if(key) document.querySelectorAll(`[id="pval-${key}"]`).forEach(e=>e.style.background='rgba(212,175,55,.2)');
+}
+
+function updateBalance(flash=false, save=true){
+  const el=document.getElementById('balance'); 
+  el.textContent=fmt(balance);
+  if(flash){el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');}
+  if(save) saveState();
+}
+
+function updateStats(){
+  document.getElementById('stats').textContent=gamesPlayed+' игр · '+gamesWon+' выигрышей';
+}
+
+// ===================== GAME LOGIC =====================
+function dealCards(){
+  console.log('🎰 dealCards вызвана, меняю gameState bet → hold');
+  gameState='hold';
+  const deck=createDeck();
+  hand=shuffle(deck).slice(0,5);
+  held=[false,false,false,false,false];
+  
+  // Сначала ренденим карты РУБАШКОЙ
+  renderCards([true,true,true,true,true],hand);
+  setMsg('Выберите карты для замены или нажмите РАЗДАЧА');
+  document.getElementById('dealBtn').textContent='НОВАЯ РАЗДАЧА';
+  document.getElementById('dealBtn').onclick=drawCards;
+  
+  // Теперь последовательно убираем face-down чтобы карты перевернулись в лицо
+  const cardFlips=document.querySelectorAll('.card-flip');
+  for(let i=0;i<5;i++){
+    setTimeout(()=>{
+      cardFlips[i].classList.remove('face-down');
+    }, i*60);
+  }
+}
+
+function drawCards(){
+  const newCards=hand.map((c,i)=>held[i]?c:null);
+  const deck=createDeck();
+  for(let i=0;i<5;i++) if(!held[i]) newCards[i]=deck[Math.floor(Math.random()*deck.length)];
+  hand=newCards;
+  
+  gameState='result';
+  document.getElementById('dealBtn').textContent='РАЗДАЧА';
+  document.getElementById('dealBtn').onclick=dealCards;
+  
+  // Сначала ренденим карты РУБАШКОЙ (с face-down классом)
+  renderCards([true,true,true,true,true],hand);
+  
+  // Теперь последовательно убираем face-down чтобы карты перевернулись в лицо
+  const cardFlips=document.querySelectorAll('.card-flip');
+  for(let i=0;i<5;i++){
+    if(!held[i]){
+      // Каждая карта переворачивается с задержкой
+      setTimeout(()=>{
+        cardFlips[i].classList.remove('face-down');
+      }, i*60);
+    }
+  }
+  
+  // После всех переворотов - показываем результат
+  const totalFlipTime=60*4+400;
+  setTimeout(()=>{
+    const res=evalHand(hand);
+    const pay=getPayout(res.key,bet);
+    const hObj=HANDS.find(h=>h.key===res.key);
+    const name=hObj?(ICONS[res.key]||'')+(hObj?hObj.label:''):'';
+    setHandName(name, pay>0);
+    highlightPT(pay>0?res.key:null);
+    gamesPlayed++;
+    if(pay>0){
+      balance+=pay;
+      gamesWon++;
+      updateBalance(true, true); // flash + сохраняем
+      setWin('+'+fmt(pay));
+      flashWin();
+      if(pay>=bet*10) spawnCoins();
+      setMsg('🎉 '+(hObj?hObj.label:'')+'! Выиграл '+fmt(pay)+' фишек!');
+    } else {
+      console.log('❌ ПРОИГРЫШ! Баланс:', balance, 'Ставка была:', bet);
+      setWin('0');
+      setMsg('Нет комбинация. Попробуй снова!');
+    }
+    updateStats();
+    if(balance<=0){
+      setTimeout(()=>setMsg('💸 Фишки кончились! Перезапуск...'),300);
+      setTimeout(()=>{ balance=10000; updateBalance(true); setMsg('🍀 10,000 фишек! Удачи!'); },1800);
+    }
+    saveState(); // Сохраняем баланс в БД после результата
+    console.log('♻️ drawCards конец, меняю gameState result → bet');
+    gameState='bet';
+    // Оставляем ту же ставку выделенной, сразу можно играть снова
+    document.getElementById('dealBtn').textContent='РАЗДАЧА';
+    document.getElementById('dealBtn').onclick=startRound;
+    setMsg('👆 Нажмите РАЗДАЧА или измените ставку!');
+  }, totalFlipTime);
+}
+
+function evalHand(cards){
+  const jokerCount=cards.filter(c=>c.r==='JKR').length;
+  const real=cards.filter(c=>c.r!=='JKR');
+  if(jokerCount===0) return evalNoJoker(real, false);
+  return evalWithJokers(real, jokerCount);
+}
+
+function evalNoJoker(cards, hasJoker){
+  const vals=cards.map(c=>RVAL[c.r]).sort((a,b)=>a-b);
+  const suits=cards.map(c=>c.s);
+  const flush=suits.every(s=>s===suits[0]);
+  const uniq=new Set(vals);
+  const wheel=vals.join(',') === '2,3,4,5,14';
+  const straight=(uniq.size===5&&vals[4]-vals[0]===4)||wheel;
+  const topSt=vals[0]===10&&vals[4]===14&&!wheel;
+  const cnt={}; vals.forEach(v=>cnt[v]=(cnt[v]||0)+1);
+  const g=Object.values(cnt).sort((a,b)=>b-a);
+  if(flush&&topSt)        return hasJoker?{key:'jroyal'}:{key:'royal'};
+  if(flush&&straight)     return{key:'sflush'};
+  if(g[0]===4)            return{key:'quads'};
+  if(g[0]===3&&g[1]===2) return{key:'fh'};
+  if(flush)               return{key:'flush'};
+  if(straight)            return{key:'str'};
+  if(g[0]===3)            return{key:'three'};
+  if(g[0]===2&&g[1]===2) return{key:'twopair'};
+  if(!hasJoker){
+    if(g[0]===2){const pv=+Object.keys(cnt).find(k=>cnt[k]===2); if(pv>=11) return{key:'jacks'};}
+  }
+  return{key:'none'};
+}
+
+function evalWithJokers(real, jCount){
+  // Если нет реальных карт, только джокеры — минимум тройка при 2+ джокерах
+  if(real.length===0){
+    if(jCount>=2) return{key:'three'};
+    return{key:'none'};
+  }
+
+  const cnt={}; real.forEach(c=>cnt[c.r]=(cnt[c.r]||0)+1);
+  const g=Object.values(cnt).sort((a,b)=>b-a);
+  const suits=real.map(c=>c.s);
+  const vals=real.map(c=>RVAL[c.r]).sort((a,b)=>a-b);
+  // allSameSuit только для реальных карт (джокер имеет масть '*' и не учитывается)
+  const allSameSuit=real.length>0 && suits.every(s=>s===suits[0]);
+
+  // 5 одинаковых: 4 карты + 1 джокер ИЛИ 3 карты + 2 джокера
+  if(g[0]===4 && jCount>=1) return{key:'five'};
+  if(g[0]===3 && jCount>=2) return{key:'five'};
+  if(g[0]===2 && g[1]===2 && jCount>=1) return{key:'five'}; // две пары + джокер
+
+  // Роял Флэш с джокером: нужны 4 карты из 10,J,Q,K,A одной масти + 1 джокер
+  if(jCount>=1 && real.length===4 && allSameSuit){
+    const royalSet=new Set([10,11,12,13,14]);
+    if(vals.every(v=>royalSet.has(v))) return{key:'jroyal'};
+  }
+  // 3 роял-карты одной масти + 2 джокера = роял
+  if(jCount===2 && real.length===3 && allSameSuit){
+    const royalSet=new Set([10,11,12,13,14]);
+    if(vals.every(v=>royalSet.has(v))) return{key:'jroyal'};
+  }
+
+  // Стрит Флэш с джокером: все реальные одной масти и можно стрит + джокер
+  if(jCount>=1 && allSameSuit && canMakeStraight(vals, jCount)) return{key:'sflush'};
+
+  // Каре с джокером: 3 одинаковых + 1 джокер ИЛИ 2 одинаковых + 2 джокера
+  if(g[0]===3 && jCount>=1) return{key:'quads'};
+  if(g[0]===2 && jCount>=2) return{key:'quads'};
+
+  // Фулл Хаус с джокером: две пары + 1 джокер
+  if(g[0]===2 && g[1]===2 && jCount===1) return{key:'fh'};
+
+  // Флэш с джокером: все реальные карты одной масти + джокер
+  if(allSameSuit && jCount>=1) return{key:'flush'};
+
+  // Стрит с джокером
+  if(jCount>=1 && canMakeStraight(vals, jCount)) return{key:'str'};
+
+  // Тройка с джокером: пара + 1 джокер = тройка
+  if(g[0]===2 && jCount>=1) return{key:'three'};
+  
+  // 2 джокера без пары = тройка (минимум)
+  if(jCount===2) return{key:'three'};
+  
+  // 1 джокер + старшая карта (J,Q,K,A) = пара старших карт
+  if(jCount===1){
+    for(const r of real){
+      const rv=RVAL[r.r];
+      if(rv>=11) return{key:'jacks'}; // джокер + J/Q/K/A = пара старших
+    }
+  }
+
+  return{key:'none'};
+}
+
+function canMakeStraight(vals, wildcards){
+  const uniq=[...new Set(vals)];
+  if(uniq.length + wildcards < 5) return false;
+  for(let lo=1; lo<=10; lo++){
+    let gaps=0;
+    for(let v=lo;v<=lo+4;v++) if(!uniq.includes(v)) gaps++;
+    if(gaps<=wildcards) return true;
+  }
+  const wheel=[1,2,3,4,5];
+  const valsWithAce1=uniq.map(v=>v===14?1:v);
+  let gaps=0;
+  for(const v of wheel) if(!valsWithAce1.includes(v)) gaps++;
+  if(gaps<=wildcards) return true;
+  return false;
+}
+
+function getPayout(key,b){
+  const h=HANDS.find(x=>x.key===key); if(!h) return 0;
+  if(key==='royal'&&b===1000) return 4000*b;
+  return h.mult*b;
+}
+
+function createDeck(){
+  const deck=[];
+  const suits=['♠','♥','♦','♣'];
+  const ranks=['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+  for(let s of suits) for(let r of ranks) deck.push({r,s});
+  for(let i=0;i<2;i++) deck.push({r:'JKR',s:'*'});
+  return deck;
+}
+
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+
+function setHandName(text,win=false){
+  const el=document.getElementById('handName');
+  el.textContent=text; el.style.color=win?'#f0d060':'#ff8888';
+  el.classList.remove('pop'); if(text){void el.offsetWidth; el.classList.add('pop');}
+}
+
+function setMsg(m){document.getElementById('msg').textContent=m;}
+function setWin(v){document.getElementById('winDisp').textContent=v;}
+function fmt(n){return n.toLocaleString('ru');}
+function flashWin(){const el=document.getElementById('winFlash');el.classList.remove('go');void el.offsetWidth;el.classList.add('go');}
+
+function spawnCoins(){
+  for(let i=0;i<10;i++) setTimeout(()=>{
+    const c=document.createElement('div'); c.className='coin'; c.textContent='🪙';
+    c.style.left=(15+Math.random()*70)+'vw'; c.style.top=(5+Math.random()*40)+'vh';
+    document.body.appendChild(c); setTimeout(()=>c.remove(),1100);
+  },i*90);
+}
+
+// ===================== START ROUND =====================
+function startRound(){
+  if(gameState!=='bet') return;
+  if(bet<=0){ setMsg('👆 Сначала выберите ставку!'); return; }
+  if(balance<bet){ setMsg('❌ Недостаточно фишек!'); return; }
+  balance-=bet;
+  document.getElementById('balance').textContent=fmt(balance);
+  saveState();
+  setMsg('Раздача начинается...');
+  setWin('0');
+  setTimeout(dealCards,400);
+}
+
+// ===================== INIT =====================
+document.querySelectorAll('.bet-btn').forEach(btn=>{
+  btn.onclick=function(){
+    if(gameState==='bet'){
+      const newBet=+this.dataset.bet;
+      if(balance>=newBet){
+        document.querySelectorAll('.bet-btn').forEach(b=>b.classList.remove('active'));
+        this.classList.add('active');
+        bet=newBet;
+        document.getElementById('bet').textContent=fmt(bet);
+        setMsg('👆 Ставка ' + fmt(bet) + ' · Нажмите РАЗДАЧА!');
+      } else {
+        setMsg('❌ Недостаточно фишек!');
+      }
+    }
+  };
+});
+
+document.getElementById('dealBtn').onclick=startRound;
+
+(async()=>{
+  await loadState();
+  updateBalance(false, false); // не перезаписываем БД при старте!
+  updateStats();
+  hand=Array(5).fill({r:'?',s:'♠'});
+  renderCards([false,false,false,false,false],hand);
+  document.getElementById('dealBtn').onclick=startRound;
+  setMsg('👋 Выберите ставку и играйте!');
+  highlightPT();
+})();
+</script>
+</body>
+</html>
