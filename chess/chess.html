@@ -857,6 +857,14 @@
 })();
 
 // ============================================================
+// EARLY DIAGNOSTICS
+// ============================================================
+setTimeout(function(){
+  const log = document.getElementById('debug-log');
+  if(log) log.innerHTML += '<div>✅ Script started, SAB='+(typeof SharedArrayBuffer)+'</div>';
+}, 0);
+
+// ============================================================
 // CHESS LOGIC (Standalone, no external libs)
 // ============================================================
 
