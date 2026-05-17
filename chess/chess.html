@@ -2429,14 +2429,21 @@ document.getElementById('btn-connect-ws').onclick=connectWebSocket;
 // INIT
 // ============================================================
 
+function dbg(msg){
+  const log = document.getElementById('debug-log');
+  if(log) log.innerHTML += '<div>'+msg+'</div>';
+}
+
 function doInit(){
-  initBoard();
-  buildColorPresets();
-  buildPalette();
-  resizeBoard();
+  dbg('doInit start, innerWidth='+window.innerWidth);
+  initBoard(); dbg('initBoard ok');
+  buildColorPresets(); dbg('colorPresets ok');
+  buildPalette(); dbg('palette ok');
+  dbg('canvas w='+boardCanvas.width+' h='+boardCanvas.height);
+  resizeBoard(); dbg('resizeBoard ok, SQ_SIZE='+SQ_SIZE);
   window.addEventListener('resize', resizeBoard);
-  updateFenDisplay();
-  initEngine('sf18mt');
+  updateFenDisplay(); dbg('fenDisplay ok');
+  initEngine('sf18mt'); dbg('initEngine called');
 }
 
 // После reload от coi-serviceworker layout может быть ещё не устоялся —
