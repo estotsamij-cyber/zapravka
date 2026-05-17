@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="coi-serviceworker.js"></script>
+  <!-- coi-serviceworker убран, используем однопоточный движок -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chess Analyzer</title>
@@ -2451,7 +2451,7 @@ function doInit(){
   resizeBoard(); dbg('resizeBoard ok, SQ_SIZE='+SQ_SIZE);
   window.addEventListener('resize', resizeBoard);
   updateFenDisplay(); dbg('fenDisplay ok');
-  initEngine('sf18mt'); dbg('initEngine called');
+  initEngine('sf18lite'); // без coi-serviceworker используем однопоточный dbg('initEngine called');
 }
 
 // После reload от coi-serviceworker layout может быть ещё не устоялся —
