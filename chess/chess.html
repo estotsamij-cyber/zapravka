@@ -2405,13 +2405,23 @@ document.getElementById('btn-connect-ws').onclick=connectWebSocket;
 // INIT
 // ============================================================
 
-initBoard();
-buildColorPresets();
-buildPalette();
-resizeBoard(); // теперь все функции определены
-window.addEventListener('resize', resizeBoard);
-updateFenDisplay();
-initEngine('sf18mt');
+function doInit(){
+  initBoard();
+  buildColorPresets();
+  buildPalette();
+  resizeBoard();
+  window.addEventListener('resize', resizeBoard);
+  updateFenDisplay();
+  initEngine('sf18mt');
+}
+
+// После reload от coi-serviceworker layout может быть ещё не устоялся —
+// ждём один кадр + небольшой таймаут чтобы гарантированно получить правильный innerWidth
+if(document.readyState === 'complete'){
+  requestAnimationFrame(() => setTimeout(doInit, 50));
+} else {
+  window.addEventListener('load', () => requestAnimationFrame(() => setTimeout(doInit, 50)));
+}
 </script>
 </body>
 </html>
