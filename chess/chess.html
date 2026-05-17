@@ -825,6 +825,7 @@
 </div>
 
 <div id="drag-ghost"></div>
+<div id="debug-log" style="position:fixed;bottom:80px;left:0;right:0;max-height:200px;overflow-y:auto;background:rgba(180,0,0,0.92);color:#fff;font-family:monospace;font-size:11px;padding:8px;z-index:9999;display:block"></div>
 
 <div id="promo-dialog">
   <h4>ПРЕВРАЩЕНИЕ В</h4>
@@ -832,6 +833,29 @@
 </div>
 
 <script>
+// ============================================================
+// VISUAL ERROR LOGGER
+// ============================================================
+(function(){
+  const log = document.getElementById('debug-log');
+  window.onerror = function(msg, src, line, col, err){
+    if(log) log.innerHTML += '<div>❌ '+msg+' (line '+line+')</div>';
+  };
+  window.addEventListener('unhandledrejection', function(e){
+    if(log) log.innerHTML += '<div>⚠️ Promise: '+e.reason+'</div>';
+  });
+  const origConsoleError = console.error;
+  console.error = function(){
+    if(log) log.innerHTML += '<div>🔴 '+Array.from(arguments).join(' ')+'</div>';
+    origConsoleError.apply(console, arguments);
+  };
+  const origConsoleWarn = console.warn;
+  console.warn = function(){
+    if(log) log.innerHTML += '<div>🟡 '+Array.from(arguments).join(' ')+'</div>';
+    origConsoleWarn.apply(console, arguments);
+  };
+})();
+
 // ============================================================
 // CHESS LOGIC (Standalone, no external libs)
 // ============================================================
