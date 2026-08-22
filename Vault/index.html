@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Vault — генератор паролей</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0e1015">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0e1015;
+    --card: #171a22;
+    --card2: #1d212b;
+    --line: #2a2f3b;
+    --text: #e9ebf1;
+    --muted: #8a90a1;
+    --mint: #5eead4;
+    --mint-dim: rgba(94,234,212,0.14);
+    --amber: #f2b544;
+    --danger: #ef6461;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+  body{
+    background:
+      radial-gradient(900px 500px at 15% -10%, rgba(94,234,212,0.07), transparent 60%),
+      radial-gradient(700px 500px at 100% 10%, rgba(242,181,68,0.05), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    display:flex; align-items:flex-start; justify-content:center;
+    padding: 28px 16px 60px;
+  }
+  .app{ width:100%; max-width:460px; }
+
+  .brand{ display:flex; align-items:center; gap:10px; margin-bottom:20px; }
+  .brand .icon-btn{ width:36px; height:36px; }
+  .brand .mark{
+    width:34px; height:34px; border-radius:9px;
+    background: linear-gradient(155deg, var(--mint), #2dd4bf);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 6px 16px rgba(94,234,212,0.25);
+  }
+  .brand .mark svg{ width:18px; height:18px; }
+  .brand h1{ font-family:'Space Grotesk', sans-serif; font-size:19px; font-weight:700; letter-spacing:0.2px; }
+  .brand span{ color:var(--muted); font-size:12px; display:block; margin-top:1px; }
+
+  .card{
+    background: linear-gradient(180deg, var(--card2), var(--card));
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:22px;
+    box-shadow: 0 20px 40px -20px rgba(0,0,0,0.6);
+  }
+
+  .pw-display{
+    position:relative;
+    background:#0b0d12;
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:20px 16px;
+    margin-bottom:16px;
+    min-height:64px;
+    display:flex; align-items:center;
+  }
+  #pwText{
+    font-family:'JetBrains Mono', monospace;
+    font-size:19px;
+    font-weight:500;
+    letter-spacing:0.5px;
+    word-break:break-all;
+    line-height:1.5;
+    flex:1;
+  }
+  #pwText .sym{ color:var(--amber); }
+  #pwText .num{ color:var(--mint); }
+  .pw-actions{ display:flex; gap:6px; margin-left:10px; flex-shrink:0; }
+  .icon-btn{
+    width:36px; height:36px; border-radius:10px; border:1px solid var(--line);
+    background:var(--card2); color:var(--muted); display:flex; align-items:center; justify-content:center;
+    cursor:pointer; transition: all .15s;
+  }
+  .icon-btn:hover{ color:var(--text); border-color:#3a4152; }
+  .icon-btn:active{ transform:scale(0.92); }
+  .icon-btn svg{ width:16px; height:16px; }
+  .icon-btn.protected{
+    color:var(--amber); border-color: rgba(242,181,68,0.55);
+    background: rgba(242,181,68,0.12);
+    box-shadow: 0 0 0 3px rgba(242,181,68,0.1);
+  }
+  .icon-btn.protected:hover{ color:var(--amber); }
+
+  .header-icons{ display:flex; align-items:center; gap:8px; }
+  .menu-wrap{ position:relative; }
+  .dropdown-menu{
+    position:absolute; top:44px; right:0; min-width:172px;
+    background: linear-gradient(180deg, var(--card2), var(--card));
+    border:1px solid var(--line); border-radius:13px; padding:6px;
+    box-shadow: 0 18px 40px -14px rgba(0,0,0,0.65);
+    opacity:0; pointer-events:none; transform: translateY(-6px);
+    transition: all .15s; z-index:15;
+  }
+  .dropdown-menu.show{ opacity:1; pointer-events:auto; transform: translateY(0); }
+  .dropdown-item{
+    display:flex; align-items:center; gap:10px; width:100%;
+    background:none; border:none; color:var(--text);
+    font-family:'Inter', sans-serif; font-size:13px; font-weight:500;
+    padding:10px 10px; border-radius:9px; cursor:pointer; text-align:left;
+  }
+  .dropdown-item:hover{ background:var(--card2); }
+  .dropdown-item svg{ width:15px; height:15px; color:var(--muted); flex-shrink:0; }
+
+  .strength{ display:flex; align-items:center; gap:8px; margin-bottom:22px; }
+  .strength-bar{ flex:1; height:6px; border-radius:4px; background:var(--line); overflow:hidden; }
+  .strength-fill{ height:100%; border-radius:4px; transition: width .25s, background .25s; width:0%; }
+  .strength-label{ font-size:11px; font-weight:600; letter-spacing:0.4px; text-transform:uppercase; color:var(--muted); width:64px; text-align:right; }
+
+  .row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .row .label{ font-size:13px; color:var(--muted); font-weight:500; }
+  .row .val{ font-family:'JetBrains Mono', monospace; font-size:14px; color:var(--mint); font-weight:600; }
+
+  input[type=range]{
+    width:100%; height:4px; border-radius:2px; background:var(--line);
+    -webkit-appearance:none; margin: 8px 0 18px; cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:20px; height:20px; border-radius:50%;
+    background:var(--mint); border:3px solid #0b0d12; box-shadow:0 0 0 1px var(--mint);
+    cursor:pointer;
+  }
+
+  .toggles{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:22px; }
+  .toggle{
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--card2); border:1px solid var(--line); border-radius:12px;
+    padding:11px 13px; cursor:pointer; user-select:none; transition: border-color .15s;
+  }
+  .toggle.active{ border-color: rgba(94,234,212,0.5); }
+  .toggle .t-label{ font-size:12.5px; font-weight:500; }
+  .toggle .t-sample{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--muted); }
+  .switch{
+    width:34px; height:19px; border-radius:20px; background:var(--line); position:relative; flex-shrink:0; margin-left:8px;
+    transition: background .2s;
+  }
+  .switch::after{
+    content:''; position:absolute; top:2px; left:2px; width:15px; height:15px; border-radius:50%;
+    background:var(--muted); transition: all .2s;
+  }
+  .toggle.active .switch{ background: var(--mint-dim); }
+  .toggle.active .switch::after{ background:var(--mint); transform:translateX(15px); }
+
+  .meta-fields{ margin-bottom:18px; display:flex; flex-direction:column; gap:12px; }
+  .field label{ font-size:11px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:0.4px; display:block; margin-bottom:6px; }
+  .field label span{ text-transform:none; font-weight:400; opacity:.7; margin-left:4px; letter-spacing:0; }
+  .field-input{
+    display:flex; align-items:center; gap:9px;
+    background:var(--card2); border:1px solid var(--line); border-radius:12px;
+    padding:10px 12px; transition: border-color .15s;
+  }
+  .field-input:focus-within{ border-color: rgba(94,234,212,0.5); }
+  .field-input svg{ width:15px; height:15px; color:var(--muted); flex-shrink:0; }
+  .field-input input{
+    flex:1; background:none; border:none; outline:none; color:var(--text);
+    font-family:'Inter', sans-serif; font-size:13.5px; min-width:0;
+  }
+  .field-input input::placeholder{ color:#565c6b; }
+  .field-copy{
+    background:none; border:none; color:var(--muted); cursor:pointer; padding:2px; flex-shrink:0;
+    display:flex; align-items:center;
+  }
+  .field-copy:hover{ color:var(--mint); }
+  .field-copy svg{ width:14px; height:14px; }
+
+  .generate-btn{
+    width:100%; padding:15px; border:none; border-radius:14px;
+    background: linear-gradient(155deg, var(--mint), #34c9b8);
+    color:#0b0d12; font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:15px;
+    letter-spacing:0.3px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+    box-shadow: 0 10px 24px -8px rgba(94,234,212,0.45);
+    transition: transform .1s;
+  }
+  .generate-btn:active{ transform:scale(0.98); }
+  .generate-btn svg{ width:17px; height:17px; }
+
+  .history{ margin-top:24px; }
+  .history-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; padding: 0 2px; }
+  .history-head h2{ font-family:'Space Grotesk', sans-serif; font-size:13px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.6px; }
+  .clear-link{ font-size:12px; color:var(--muted); cursor:pointer; background:none; border:none; }
+  .clear-link:hover{ color:var(--danger); }
+
+  .hist-item{
+    display:flex; align-items:center; gap:10px;
+    background:var(--card2); border:1px solid var(--line); border-radius:12px;
+    padding:11px 12px; margin-bottom:8px;
+  }
+  .hist-site{ font-size:12.5px; font-weight:700; color:var(--text); margin-bottom:3px; }
+  .hist-email{
+    display:flex; align-items:center; gap:6px; margin-bottom:5px;
+  }
+  .hist-email span{
+    font-size:11.5px; color:var(--muted); font-family:'JetBrains Mono', monospace;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .hist-email button{
+    background:none; border:none; color:var(--muted); cursor:pointer; padding:1px; flex-shrink:0; display:flex;
+  }
+  .hist-email button:hover{ color:var(--mint); }
+  .hist-email button svg{ width:11px; height:11px; }
+
+  .hist-pw{
+    flex:1; font-family:'JetBrains Mono', monospace; font-size:13px; color:var(--text);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:0.3px;
+  }
+  .hist-pw.masked{ letter-spacing:2px; }
+  .hist-meta{ font-size:10px; color:var(--muted); margin-top:2px; }
+  .hist-actions{ display:flex; gap:4px; flex-shrink:0; }
+  .hist-actions button{
+    width:28px; height:28px; border-radius:8px; border:1px solid var(--line); background:transparent;
+    color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .hist-actions button:hover{ color:var(--text); }
+  .hist-actions button svg{ width:13px; height:13px; }
+
+  .empty{
+    text-align:center; padding:26px 10px; color:var(--muted); font-size:12.5px;
+    border:1px dashed var(--line); border-radius:12px;
+  }
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:#1d212b; border:1px solid var(--mint); color:var(--text);
+    padding:10px 18px; border-radius:10px; font-size:13px; font-weight:500;
+    opacity:0; pointer-events:none; transition: all .25s; z-index:20;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .confirm-overlay{
+    position:fixed; inset:0; background:rgba(6,7,10,0.72); backdrop-filter: blur(3px);
+    display:flex; align-items:center; justify-content:center; padding:20px;
+    opacity:0; pointer-events:none; transition: opacity .18s; z-index:30;
+  }
+  .confirm-overlay.show{ opacity:1; pointer-events:auto; }
+  .confirm-box{
+    background: linear-gradient(180deg, var(--card2), var(--card));
+    border:1px solid var(--line); border-radius:18px; padding:26px 22px 22px;
+    max-width:320px; width:100%; text-align:center;
+    transform: scale(0.94) translateY(6px); transition: transform .18s;
+    box-shadow: 0 24px 50px -18px rgba(0,0,0,0.7);
+  }
+  .confirm-overlay.show .confirm-box{ transform: scale(1) translateY(0); }
+  .confirm-icon{
+    width:52px; height:52px; border-radius:50%; background:rgba(239,100,97,0.12);
+    display:flex; align-items:center; justify-content:center; margin:0 auto 14px;
+  }
+  .confirm-icon svg{ width:26px; height:26px; }
+  .confirm-box h3{ font-family:'Space Grotesk', sans-serif; font-size:16px; font-weight:700; margin-bottom:8px; }
+  .confirm-box p{ font-size:13px; color:var(--muted); line-height:1.5; margin-bottom:20px; }
+  .confirm-box p span{ color:var(--text); font-weight:600; }
+  .confirm-actions{ display:flex; gap:10px; }
+  .confirm-btn{
+    flex:1; padding:11px; border-radius:11px; font-size:13.5px; font-weight:600;
+    cursor:pointer; border:1px solid var(--line); font-family:'Inter', sans-serif;
+  }
+  .confirm-btn.ghost{ background:transparent; color:var(--text); }
+  .confirm-btn.ghost:hover{ border-color:#3a4152; }
+  .confirm-btn.danger{ background:var(--danger); border-color:var(--danger); color:#1a0d0d; }
+  .confirm-btn.danger:hover{ filter:brightness(1.08); }
+  .confirm-btn.primary{ background:var(--mint); border-color:var(--mint); color:#0b0d12; }
+  .confirm-btn.primary:hover{ filter:brightness(1.06); }
+  .confirm-btn.danger-outline{
+    width:100%; margin-top:10px; background:transparent; border:1px solid rgba(239,100,97,0.45);
+    color:var(--danger); padding:11px; border-radius:11px; font-size:13.5px; font-weight:600; cursor:pointer;
+  }
+  .confirm-btn.danger-outline:hover{ background:rgba(239,100,97,0.1); }
+  .confirm-btn:disabled{ opacity:0.45; cursor:not-allowed; }
+
+  .pin-wrap{ margin-bottom:12px; text-align:left; }
+  .pin-input{
+    width:100%; background:#0b0d12; border:1px solid var(--line); border-radius:10px;
+    padding:11px 12px; color:var(--text); font-family:'JetBrains Mono', monospace; font-size:13.5px;
+    outline:none; transition: border-color .15s;
+  }
+  .pin-input:focus{ border-color: rgba(94,234,212,0.6); }
+  .pin-input.error{ border-color: var(--danger); }
+  .pin-error{ font-size:11px; color:var(--danger); margin-top:5px; display:none; }
+  .pin-error.show{ display:block; }
+  .text-link{
+    background:none; border:none; color:var(--muted); font-size:12px; margin-top:14px; cursor:pointer;
+  }
+  .text-link:hover{ color:var(--danger); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="brand">
+    <div class="mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#0b0d12" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+    </div>
+    <div style="flex:1;">
+      <h1>Vault</h1>
+      <span>генератор паролей с историей</span>
+    </div>
+    <div class="header-icons">
+      <button class="icon-btn" id="securityBtn" title="Защита паролей">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </button>
+      <div class="menu-wrap">
+        <button class="icon-btn" id="menuBtn" title="Экспорт / импорт">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+        </button>
+        <div class="dropdown-menu" id="dropdownMenu">
+          <button class="dropdown-item" id="exportBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Экспорт
+          </button>
+          <button class="dropdown-item" id="importBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 8 12 3 17 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Импорт
+          </button>
+        </div>
+        <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="pw-display">
+      <div id="pwText">нажми «сгенерировать»</div>
+      <div class="pw-actions">
+        <button class="icon-btn" id="copyBtn" title="Копировать">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="strength">
+      <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+      <div class="strength-label" id="strengthLabel">—</div>
+    </div>
+
+    <div class="row">
+      <div class="label">Длина пароля</div>
+      <div class="val" id="lenVal">16</div>
+    </div>
+    <input type="range" id="lenSlider" min="4" max="64" value="16">
+
+    <div class="toggles">
+      <div class="toggle active" data-opt="upper">
+        <div><div class="t-label">A-Z</div><div class="t-sample">заглавные</div></div>
+        <div class="switch"></div>
+      </div>
+      <div class="toggle active" data-opt="lower">
+        <div><div class="t-label">a-z</div><div class="t-sample">строчные</div></div>
+        <div class="switch"></div>
+      </div>
+      <div class="toggle active" data-opt="numbers">
+        <div><div class="t-label">0-9</div><div class="t-sample">цифры</div></div>
+        <div class="switch"></div>
+      </div>
+      <div class="toggle active" data-opt="symbols">
+        <div><div class="t-label">#%!</div><div class="t-sample">символы</div></div>
+        <div class="switch"></div>
+      </div>
+      <div class="toggle" data-opt="noambig" style="grid-column: 1 / -1;">
+        <div><div class="t-label">Без похожих символов</div><div class="t-sample">исключить I l 1 O 0</div></div>
+        <div class="switch"></div>
+      </div>
+    </div>
+
+    <div class="meta-fields">
+      <div class="field">
+        <label>Сайт <span>необязательно</span></label>
+        <div class="field-input">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></svg>
+          <input type="text" id="siteInput" placeholder="например, github.com">
+        </div>
+      </div>
+      <div class="field">
+        <label>Email / логин <span>необязательно</span></label>
+        <div class="field-input">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>
+          <input type="text" id="emailInput" placeholder="you@example.com">
+          <button class="field-copy" id="copyEmailBtn" title="Копировать email">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Свой пароль <span>ввести и сохранить в историю</span></label>
+        <div class="field-input">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <input type="password" id="manualPwInput" placeholder="Введи существующий пароль" autocomplete="off">
+          <button class="field-copy" id="toggleManualPwBtn" title="Показать/скрыть">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <button class="field-copy" id="saveManualBtn" title="Сохранить в историю">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <button class="generate-btn" id="genBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+      Сгенерировать
+    </button>
+  </div>
+
+  <div class="history">
+    <div class="history-head">
+      <h2>История</h2>
+      <div style="display:flex; gap:14px;">
+        <button class="clear-link" id="clearBtn">очистить</button>
+      </div>
+    </div>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Скопировано</div>
+
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon" id="confirmIcon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </div>
+    <h3 id="confirmTitle">Удалить всю историю?</h3>
+    <p id="confirmText">Все сохранённые пароли (<span id="confirmCount">0</span>) будут удалены безвозвратно.</p>
+    <div class="pin-wrap" id="confirmPinWrap" style="display:none;">
+      <input type="password" id="confirmPinInput" class="pin-input" placeholder="Пароль защиты" autocomplete="off">
+      <div class="pin-error" id="confirmPinError">Неверный пароль</div>
+    </div>
+    <div class="confirm-actions">
+      <button id="confirmCancel" class="confirm-btn ghost">Отмена</button>
+      <button id="confirmOk" class="confirm-btn danger">Удалить</button>
+    </div>
+  </div>
+</div>
+
+<div class="confirm-overlay" id="securityOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon" style="background:rgba(94,234,212,0.12);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--mint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <h3 id="secTitle">Защита паролей</h3>
+    <p id="secText">Поставь пароль — и просмотр, копирование и удаление паролей из истории будут требовать его ввод. Сами пароли в истории будут храниться в зашифрованном виде. Можно не ставить.</p>
+
+    <div id="secHasPin" style="display:none;">
+      <div class="pin-wrap">
+        <input type="password" id="secOldPin" class="pin-input" placeholder="Текущий пароль" autocomplete="off">
+        <div class="pin-error" id="secOldError">Неверный пароль</div>
+      </div>
+    </div>
+
+    <div id="secNewFields">
+      <div class="pin-wrap">
+        <input type="password" id="secNewPin" class="pin-input" placeholder="Новый пароль" autocomplete="off">
+      </div>
+      <div class="pin-wrap">
+        <input type="password" id="secNewPin2" class="pin-input" placeholder="Повтори пароль" autocomplete="off">
+        <div class="pin-error" id="secNewError">Пароли не совпадают</div>
+      </div>
+    </div>
+
+    <div class="confirm-actions">
+      <button id="secCancel" class="confirm-btn ghost">Закрыть</button>
+      <button id="secSave" class="confirm-btn primary">Поставить</button>
+    </div>
+    <button class="confirm-btn danger-outline" id="secRemove" style="display:none;">Убрать защиту</button>
+    <button class="text-link" id="secForgot" style="display:none;">Забыл пароль? Стереть всю историю</button>
+  </div>
+</div>
+
+<div class="confirm-overlay" id="textPromptOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon" style="background:rgba(94,234,212,0.12);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--mint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <h3 id="tpTitle">Экспорт истории</h3>
+    <p id="tpText">Можно защитить файл паролем — тогда он сохранится в зашифрованном виде.</p>
+    <div class="pin-wrap">
+      <input type="password" id="tpInput" class="pin-input" placeholder="Пароль" autocomplete="off">
+      <div class="pin-error" id="tpError">Введи пароль</div>
+    </div>
+    <div class="confirm-actions">
+      <button id="tpCancel" class="confirm-btn ghost">Отмена</button>
+      <button id="tpOk" class="confirm-btn primary">Продолжить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const state = {
+  length: 16,
+  upper: true, lower: true, numbers: true, symbols: true, noambig: false,
+  current: '',
+  history: [],
+  pinHash: null,
+  pinSalt: null,
+  cryptoKey: null // in-memory only, never persisted
+};
+
+const SETS = {
+  upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+  lower: 'abcdefghijklmnopqrstuvwxyz',
+  numbers: '0123456789',
+  symbols: '!@#$%^&*()-_=+[]{}<>?~'
+};
+const AMBIGUOUS = /[Il1O0]/g;
+
+function buildCharset(){
+  let charset = '';
+  ['upper','lower','numbers','symbols'].forEach(k=>{
+    if(state[k]) charset += SETS[k];
+  });
+  if(state.noambig) charset = charset.replace(AMBIGUOUS,'');
+  return charset;
+}
+
+function secureRandomInt(max){
+  const arr = new Uint32Array(1);
+  crypto.getRandomValues(arr);
+  return arr[0] % max;
+}
+
+function generatePassword(){
+  const charset = buildCharset();
+  if(!charset){
+    showToast('Выбери хотя бы один тип символов');
+    return null;
+  }
+  let pw = '';
+  for(let i=0;i<state.length;i++){
+    pw += charset[secureRandomInt(charset.length)];
+  }
+  return pw;
+}
+
+function renderPassword(pw){
+  const el = document.getElementById('pwText');
+  el.innerHTML = pw.split('').map(c=>{
+    if(/[0-9]/.test(c)) return `<span class="num">${c}</span>`;
+    if(/[a-zA-Z]/.test(c)) return c;
+    return `<span class="sym">${escapeHtml(c)}</span>`;
+  }).join('');
+}
+
+function escapeHtml(c){
+  const map = {'<':'&lt;','>':'&gt;','&':'&amp;'};
+  return map[c] || c;
+}
+
+function calcStrength(){
+  let poolSize = 0;
+  ['upper','lower','numbers','symbols'].forEach(k=>{ if(state[k]) poolSize += SETS[k].length; });
+  if(poolSize===0) return 0;
+  const entropy = state.length * Math.log2(poolSize);
+  return entropy;
+}
+
+function updateStrengthUI(){
+  const entropy = calcStrength();
+  const fill = document.getElementById('strengthFill');
+  const label = document.getElementById('strengthLabel');
+  let pct, color, text;
+  if(entropy < 40){ pct=25; color='var(--danger)'; text='слабый'; }
+  else if(entropy < 60){ pct=50; color='var(--amber)'; text='средний'; }
+  else if(entropy < 90){ pct=75; color='var(--mint)'; text='сильный'; }
+  else { pct=100; color='var(--mint)'; text='железный'; }
+  fill.style.width = pct+'%';
+  fill.style.background = color;
+  label.textContent = text;
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._tm);
+  showToast._tm = setTimeout(()=>t.classList.remove('show'), 1400);
+}
+
+function copyToClipboard(text){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    return navigator.clipboard.writeText(text).catch(()=>fallbackCopy(text));
+  }
+  return fallbackCopy(text);
+}
+
+function fallbackCopy(text){
+  return new Promise((resolve, reject)=>{
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      ta.style.top = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      ok ? resolve() : reject(new Error('execCommand failed'));
+    }catch(e){ reject(e); }
+  });
+}
+
+// ---------- Crypto helpers ----------
+function hashPin(pin){
+  const enc = new TextEncoder().encode(pin);
+  return crypto.subtle.digest('SHA-256', enc).then(buf=>
+    Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('')
+  );
+}
+
+function b64encode(buf){
+  const bytes = new Uint8Array(buf);
+  let bin = '';
+  for(let i=0;i<bytes.length;i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+function b64decode(str){
+  const bin = atob(str);
+  const bytes = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+// Derives an AES-GCM key from the PIN + salt via PBKDF2 (150k iterations).
+async function deriveKey(pin, saltB64){
+  const salt = b64decode(saltB64);
+  const enc = new TextEncoder().encode(pin);
+  const baseKey = await crypto.subtle.importKey('raw', enc, {name:'PBKDF2'}, false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name:'PBKDF2', salt, iterations: 150000, hash:'SHA-256' },
+    baseKey,
+    { name:'AES-GCM', length:256 },
+    false,
+    ['encrypt','decrypt']
+  );
+}
+
+async function aesEncrypt(key, plaintext){
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encoded = new TextEncoder().encode(plaintext);
+  const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, encoded);
+  return { iv: b64encode(iv), ct: b64encode(ct) };
+}
+async function aesDecrypt(key, payload){
+  const iv = b64decode(payload.iv);
+  const ct = b64decode(payload.ct);
+  const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv}, key, ct);
+  return new TextDecoder().decode(pt);
+}
+
+// Returns the plaintext password of a history entry, decrypting it if needed.
+async function getEntryPassword(entry){
+  if(!entry) return null;
+  if(entry.pw !== undefined) return entry.pw;
+  if(entry.encPw && state.cryptoKey){
+    try{ return await aesDecrypt(state.cryptoKey, entry.encPw); }
+    catch(e){ showToast('Не удалось расшифровать пароль'); return null; }
+  }
+  return null;
+}
+
+// Makes sure we have a usable AES key in memory, asking for the PIN if needed.
+async function ensureCryptoKey(){
+  if(state.cryptoKey) return state.cryptoKey;
+  try{
+    await requestPin({
+      title: 'Разблокировать хранилище',
+      text: 'Введи пароль защиты — без него новый пароль нельзя сохранить в зашифрованном виде.',
+      okLabel: 'Разблокировать',
+      tone: 'mint'
+    });
+    return state.cryptoKey;
+  }catch(e){ return null; }
+}
+
+async function loadSecurity(){
+  try{
+    const raw = localStorage.getItem('vault-security');
+    if(raw){
+      const s = JSON.parse(raw);
+      state.pinHash = s.pinHash || null;
+      state.pinSalt = s.pinSalt || null;
+    }
+  }catch(e){ state.pinHash = null; state.pinSalt = null; }
+}
+async function saveSecurity(){
+  try{
+    localStorage.setItem('vault-security', JSON.stringify({ pinHash: state.pinHash, pinSalt: state.pinSalt }));
+  }catch(e){ console.error('save security failed', e); }
+}
+
+document.getElementById('securityBtn').addEventListener('click', openSecurity);
+
+function openSecurity(){
+  const hasPin = !!state.pinHash;
+  document.getElementById('secHasPin').style.display = hasPin ? 'block' : 'none';
+  document.getElementById('secRemove').style.display = hasPin ? 'block' : 'none';
+  document.getElementById('secForgot').style.display = hasPin ? 'block' : 'none';
+  document.getElementById('secSave').textContent = hasPin ? 'Сменить пароль' : 'Поставить';
+  document.getElementById('secText').textContent = hasPin
+    ? 'Защита включена. Чтобы сменить пароль — введи текущий и новый. Чтобы отключить — жми «Убрать защиту» ниже.'
+    : 'Поставь пароль — и просмотр, копирование и удаление паролей из истории будут требовать его ввод. Сами пароли в истории будут храниться в зашифрованном виде. Можно не ставить.';
+  document.getElementById('secNewPin').value = '';
+  document.getElementById('secNewPin2').value = '';
+  document.getElementById('secOldPin').value = '';
+  hideErr('secNewError'); hideErr('secOldError');
+  document.getElementById('securityOverlay').classList.add('show');
+  setTimeout(()=>{
+    document.getElementById(hasPin ? 'secOldPin' : 'secNewPin').focus();
+  }, 60);
+}
+function closeSecurity(){
+  document.getElementById('securityOverlay').classList.remove('show');
+}
+document.getElementById('secCancel').addEventListener('click', closeSecurity);
+document.getElementById('securityOverlay').addEventListener('click', (e)=>{
+  if(e.target.id==='securityOverlay') closeSecurity();
+});
+
+function showErr(id){ document.getElementById(id).classList.add('show'); }
+function hideErr(id){ document.getElementById(id).classList.remove('show'); }
+
+// ---------- Header dropdown menu (export / import) ----------
+function closeDropdown(){
+  document.getElementById('dropdownMenu').classList.remove('show');
+}
+document.getElementById('menuBtn').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  document.getElementById('dropdownMenu').classList.toggle('show');
+});
+document.addEventListener('click', (e)=>{
+  const wrap = document.getElementById('dropdownMenu');
+  if(wrap.classList.contains('show') && !e.target.closest('.menu-wrap')){
+    closeDropdown();
+  }
+});
+
+// ---------- Generic password-prompt dialog (export / import passphrase) ----------
+let tpResolve = null, tpReject = null;
+function promptText({title, text, placeholder, okLabel, required}){
+  return new Promise((resolve, reject)=>{
+    tpResolve = resolve; tpReject = reject;
+    document.getElementById('tpTitle').textContent = title;
+    document.getElementById('tpText').textContent = text;
+    const input = document.getElementById('tpInput');
+    input.placeholder = placeholder || 'Пароль';
+    input.value = '';
+    input.dataset.required = required ? '1' : '';
+    input.classList.remove('error');
+    hideErr('tpError');
+    document.getElementById('tpOk').textContent = okLabel || 'Продолжить';
+    document.getElementById('textPromptOverlay').classList.add('show');
+    setTimeout(()=>{ input.focus(); }, 60);
+  });
+}
+function closeTextPrompt(){ document.getElementById('textPromptOverlay').classList.remove('show'); }
+function rejectTextPrompt(){
+  if(tpReject){ const rj = tpReject; tpResolve = null; tpReject = null; rj(new Error('cancelled')); }
+}
+document.getElementById('tpCancel').addEventListener('click', ()=>{ closeTextPrompt(); rejectTextPrompt(); });
+document.getElementById('textPromptOverlay').addEventListener('click', (e)=>{
+  if(e.target.id==='textPromptOverlay'){ closeTextPrompt(); rejectTextPrompt(); }
+});
+document.getElementById('tpOk').addEventListener('click', ()=>{
+  const input = document.getElementById('tpInput');
+  const val = input.value;
+  if(input.dataset.required==='1' && !val){
+    input.classList.add('error');
+    showErr('tpError');
+    return;
+  }
+  input.classList.remove('error');
+  hideErr('tpError');
+  closeTextPrompt();
+  if(tpResolve){ const r = tpResolve; tpResolve = null; tpReject = null; r(val); }
+});
+
+function updateSecurityIcon(){
+  const btn = document.getElementById('securityBtn');
+  btn.classList.toggle('protected', !!state.pinHash);
+  btn.title = state.pinHash ? 'Защита включена' : 'Защита паролей';
+}
+
+// Set or change the PIN. Re-encrypts the whole history with the new key.
+document.getElementById('secSave').addEventListener('click', async ()=>{
+  const hasPin = !!state.pinHash;
+  let oldKey = null;
+  if(hasPin){
+    const old = document.getElementById('secOldPin').value;
+    const oldHash = await hashPin(old || '');
+    if(oldHash !== state.pinHash){ showErr('secOldError'); return; }
+    hideErr('secOldError');
+    oldKey = state.cryptoKey || await deriveKey(old, state.pinSalt);
+  }
+  const p1 = document.getElementById('secNewPin').value;
+  const p2 = document.getElementById('secNewPin2').value;
+  if(!p1){ showToast('Введи новый пароль'); return; }
+  if(p1 !== p2){ showErr('secNewError'); return; }
+  hideErr('secNewError');
+
+  // Decrypt everything we currently have to plaintext first.
+  const plain = [];
+  for(const item of state.history){
+    let pw = null;
+    if(item.pw !== undefined) pw = item.pw;
+    else if(item.encPw && oldKey){
+      try{ pw = await aesDecrypt(oldKey, item.encPw); }catch(e){ pw = null; }
+    }
+    if(pw !== null){
+      plain.push({ pw, len: item.len, ts: item.ts, site: item.site, email: item.email });
+    }
+  }
+
+  // Fresh salt + key, re-encrypt everything with the new PIN.
+  const newSalt = b64encode(crypto.getRandomValues(new Uint8Array(16)).buffer);
+  const newKey = await deriveKey(p1, newSalt);
+  const reEncrypted = [];
+  for(const item of plain){
+    const enc = await aesEncrypt(newKey, item.pw);
+    reEncrypted.push({ encPw: enc, len: item.len, ts: item.ts, site: item.site, email: item.email });
+  }
+  state.history = reEncrypted;
+  state.pinHash = await hashPin(p1);
+  state.pinSalt = newSalt;
+  state.cryptoKey = newKey;
+  await saveSecurity();
+  saveHistory();
+  renderHistory();
+  updateSecurityIcon();
+  closeSecurity();
+  showToast('Защита включена');
+});
+
+// Remove the PIN: decrypt everything back to plaintext storage.
+document.getElementById('secRemove').addEventListener('click', async ()=>{
+  const old = document.getElementById('secOldPin').value;
+  const oldHash = await hashPin(old || '');
+  if(oldHash !== state.pinHash){ showErr('secOldError'); return; }
+  const oldKey = state.cryptoKey || await deriveKey(old, state.pinSalt);
+
+  const plain = [];
+  for(const item of state.history){
+    let pw = null;
+    if(item.pw !== undefined) pw = item.pw;
+    else if(item.encPw){
+      try{ pw = await aesDecrypt(oldKey, item.encPw); }catch(e){ pw = null; }
+    }
+    if(pw !== null){
+      plain.push({ pw, len: item.len, ts: item.ts, site: item.site, email: item.email });
+    }
+  }
+  state.history = plain;
+  state.pinHash = null;
+  state.pinSalt = null;
+  state.cryptoKey = null;
+  await saveSecurity();
+  saveHistory();
+  renderHistory();
+  updateSecurityIcon();
+  closeSecurity();
+  showToast('Защита отключена');
+});
+
+// Forgot the PIN entirely — the only way out, since the data can't be decrypted without it.
+document.getElementById('secForgot').addEventListener('click', async ()=>{
+  closeSecurity();
+  try{
+    await requestPin({
+      title: 'Стереть всё и снять защиту?',
+      text: 'Без пароля защиты сохранённые пароли расшифровать невозможно — вся история будет удалена безвозвратно, а защита снята.',
+      okLabel: 'Стереть всё',
+      tone: 'danger',
+      skipCheck: true
+    });
+  }catch(e){ return; }
+  state.history = [];
+  state.pinHash = null;
+  state.pinSalt = null;
+  state.cryptoKey = null;
+  await saveSecurity();
+  saveHistory();
+  renderHistory();
+  updateSecurityIcon();
+  showToast('История стёрта, защита снята');
+});
+
+// ---------- Export ----------
+document.getElementById('exportBtn').addEventListener('click', async ()=>{
+  closeDropdown();
+  if(state.history.length===0){ showToast('История пуста'); return; }
+  if(state.pinHash){
+    const key = await ensureCryptoKey();
+    if(!key){ showToast('Экспорт отменён'); return; }
+  }
+
+  let exportPass;
+  try{
+    exportPass = await promptText({
+      title: 'Экспорт истории',
+      text: 'Можно задать пароль для файла — тогда он сохранится в зашифрованном виде. Оставь поле пустым для обычного экспорта.',
+      placeholder: 'Пароль для файла (необязательно)',
+      okLabel: 'Экспортировать',
+      required: false
+    });
+  }catch(e){ return; }
+
+  const rows = [];
+  for(const h of state.history){
+    const pw = await getEntryPassword(h);
+    if(pw===null) continue;
+    rows.push({ site: h.site || '', email: h.email || '', password: pw, date: new Date(h.ts).toISOString() });
+  }
+  if(rows.length===0){ showToast('Не удалось расшифровать историю'); return; }
+
+  let fileContent;
+  if(exportPass){
+    const salt = b64encode(crypto.getRandomValues(new Uint8Array(16)).buffer);
+    const key = await deriveKey(exportPass, salt);
+    const enc = await aesEncrypt(key, JSON.stringify(rows));
+    fileContent = JSON.stringify({ vaultExport: true, encrypted: true, salt, iv: enc.iv, ct: enc.ct }, null, 2);
+  } else {
+    fileContent = JSON.stringify({ vaultExport: true, encrypted: false, rows }, null, 2);
+  }
+
+  const blob = new Blob([fileContent], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'vault-history-' + new Date().toISOString().slice(0,10) + (exportPass ? '-encrypted' : '') + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(exportPass ? 'Зашифрованный файл сохранён' : 'Файл сохранён');
+});
+
+// ---------- Import ----------
+document.getElementById('importBtn').addEventListener('click', ()=>{
+  closeDropdown();
+  document.getElementById('importFile').click();
+});
+
+document.getElementById('importFile').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  e.target.value = '';
+  if(!file) return;
+
+  let text;
+  try{ text = await file.text(); }
+  catch(err){ showToast('Не удалось прочитать файл'); return; }
+
+  let parsed;
+  try{ parsed = JSON.parse(text); }
+  catch(err){ showToast('Файл повреждён или не JSON'); return; }
+
+  let rows;
+  if(Array.isArray(parsed)){
+    // старый формат экспорта — обычный массив записей
+    rows = parsed;
+  } else if(parsed && parsed.encrypted){
+    let pass;
+    try{
+      pass = await promptText({
+        title: 'Импорт зашифрованного файла',
+        text: 'Файл защищён паролем. Введи пароль, который использовался при экспорте.',
+        placeholder: 'Пароль файла',
+        okLabel: 'Расшифровать',
+        required: true
+      });
+    }catch(err){ return; }
+    try{
+      const key = await deriveKey(pass, parsed.salt);
+      const decrypted = await aesDecrypt(key, { iv: parsed.iv, ct: parsed.ct });
+      rows = JSON.parse(decrypted);
+    }catch(err){ showToast('Неверный пароль или повреждённый файл'); return; }
+  } else if(parsed && Array.isArray(parsed.rows)){
+    rows = parsed.rows;
+  } else {
+    showToast('Неизвестный формат файла'); return;
+  }
+
+  if(!Array.isArray(rows) || rows.length===0){ showToast('В файле нет паролей'); return; }
+
+  if(state.pinHash){
+    const key = await ensureCryptoKey();
+    if(!key){ showToast('Импорт отменён'); return; }
+  }
+
+  let imported = 0;
+  for(const r of rows){
+    if(!r || !r.password) continue;
+    const ts = r.date ? (Date.parse(r.date) || Date.now()) : Date.now();
+    const entry = { len: String(r.password).length, ts, site: r.site || '', email: r.email || '' };
+    if(state.cryptoKey){
+      entry.encPw = await aesEncrypt(state.cryptoKey, r.password);
+    } else {
+      entry.pw = r.password;
+    }
+    state.history.unshift(entry);
+    imported++;
+  }
+  if(state.history.length > 25) state.history = state.history.slice(0,25);
+
+  saveHistory();
+  renderHistory();
+  showToast(imported > 0 ? `Импортировано записей: ${imported}` : 'Ничего не импортировано');
+});
+
+// ---------- Storage (localStorage — works as a standalone downloaded file) ----------
+async function loadState(){
+  try{
+    const raw = localStorage.getItem('vault-settings');
+    if(raw) Object.assign(state, JSON.parse(raw));
+  }catch(e){ /* no saved settings yet */ }
+  try{
+    const raw = localStorage.getItem('vault-history');
+    if(raw) state.history = JSON.parse(raw);
+  }catch(e){ state.history = []; }
+}
+
+async function saveSettings(){
+  try{
+    localStorage.setItem('vault-settings', JSON.stringify({
+      length: state.length, upper: state.upper, lower: state.lower,
+      numbers: state.numbers, symbols: state.symbols, noambig: state.noambig,
+      lastEmail: state.lastEmail || ''
+    }));
+  }catch(e){ console.error('save settings failed', e); }
+}
+
+async function saveHistory(){
+  try{
+    localStorage.setItem('vault-history', JSON.stringify(state.history));
+  }catch(e){ console.error('save history failed', e); }
+}
+
+// Adds a freshly generated password to history — encrypted if a PIN is set.
+async function addToHistory(pw){
+  const site = document.getElementById('siteInput').value.trim();
+  const email = document.getElementById('emailInput').value.trim();
+  const entry = { len: pw.length, ts: Date.now(), site, email };
+  if(state.pinHash){
+    const key = await ensureCryptoKey();
+    if(!key) return false;
+    entry.encPw = await aesEncrypt(key, pw);
+  } else {
+    entry.pw = pw;
+  }
+  state.history.unshift(entry);
+  if(state.history.length > 25) state.history = state.history.slice(0,25);
+  if(email){ state.lastEmail = email; saveSettings(); }
+  document.getElementById('siteInput').value = '';
+  saveHistory();
+  renderHistory();
+  return true;
+}
+
+function renderHistory(){
+  const list = document.getElementById('historyList');
+  if(state.history.length===0){
+    list.innerHTML = '<div class="empty">Пока пусто — сгенерируй первый пароль</div>';
+    return;
+  }
+  list.innerHTML = state.history.map((item, idx)=>{
+    const date = new Date(item.ts);
+    const timeStr = date.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'}) + ' ' + date.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+    const siteLine = item.site ? `<div class="hist-site">${escapeHtml(item.site)}</div>` : '';
+    const emailLine = item.email ? `
+        <div class="hist-email">
+          <span>${escapeHtml(item.email)}</span>
+          <button data-action="copy-email" data-idx="${idx}" title="Копировать email">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>` : '';
+    const pwAttr = item.pw !== undefined ? ` data-pw="${escapeAttr(item.pw)}"` : '';
+    return `
+      <div class="hist-item">
+        <div style="flex:1; min-width:0;">
+          ${siteLine}
+          ${emailLine}
+          <div class="hist-pw masked" data-idx="${idx}" data-len="${item.len}"${pwAttr}>${'•'.repeat(Math.min(item.len,20))}</div>
+          <div class="hist-meta">${item.len} симв. · ${timeStr}</div>
+        </div>
+        <div class="hist-actions">
+          <button data-action="reveal" data-idx="${idx}" title="Показать">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <button data-action="copy" data-idx="${idx}" title="Копировать пароль">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+          <button data-action="delete" data-idx="${idx}" title="Удалить">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z"/></svg>
+          </button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function escapeAttr(s){ return s.replace(/"/g,'&quot;'); }
+
+document.getElementById('historyList').addEventListener('click', (e)=>{
+  const btn = e.target.closest('button');
+  const pwEl = e.target.closest('.hist-pw');
+  if(pwEl && !btn){
+    revealEntry(parseInt(pwEl.dataset.idx));
+    return;
+  }
+  if(!btn) return;
+  const idx = parseInt(btn.dataset.idx);
+  const action = btn.dataset.action;
+  if(action==='reveal'){
+    revealEntry(idx);
+  } else if(action==='copy'){
+    copyEntry(idx);
+  } else if(action==='copy-email'){
+    const email = state.history[idx].email;
+    copyToClipboard(email).then(()=>showToast('Email скопирован')).catch(()=>showToast('Не удалось скопировать'));
+  } else if(action==='delete'){
+    deleteEntry(idx);
+  }
+});
+
+function hidePw(el){
+  const len = parseInt(el.dataset.len || '0', 10);
+  el.textContent = '•'.repeat(Math.min(len,20));
+  el.classList.add('masked');
+}
+
+async function revealEntry(idx){
+  const el = document.querySelector(`.hist-pw[data-idx="${idx}"]`);
+  if(!el) return;
+  if(!el.classList.contains('masked')){
+    hidePw(el);
+    return;
+  }
+  if(state.pinHash){
+    try{
+      await requestPin({
+        title: 'Показать пароль?',
+        text: 'Введи пароль защиты, чтобы посмотреть сохранённый пароль.',
+        okLabel: 'Показать', tone: 'mint'
+      });
+    }catch(e){ return; }
+  }
+  const pw = await getEntryPassword(state.history[idx]);
+  if(pw===null) return;
+  el.textContent = pw;
+  el.classList.remove('masked');
+}
+
+async function copyEntry(idx){
+  if(state.pinHash){
+    try{
+      await requestPin({
+        title: 'Скопировать пароль?',
+        text: 'Введи пароль защиты, чтобы скопировать сохранённый пароль.',
+        okLabel: 'Скопировать', tone: 'mint'
+      });
+    }catch(e){ return; }
+  }
+  const pw = await getEntryPassword(state.history[idx]);
+  if(pw===null) return;
+  copyToClipboard(pw).then(()=>showToast('Пароль скопирован')).catch(()=>showToast('Не удалось скопировать'));
+}
+
+async function deleteEntry(idx){
+  try{
+    await requestPin({
+      title: 'Удалить пароль?',
+      text: 'Этот пароль будет удалён из истории безвозвратно.',
+      okLabel: 'Удалить', tone: 'danger'
+    });
+  }catch(e){ return; }
+  state.history.splice(idx,1);
+  saveHistory();
+  renderHistory();
+  showToast('Пароль удалён');
+}
+
+// ---------- Generic PIN-gate dialog (reuses the confirm overlay) ----------
+let pinGateResolve = null;
+let pinGateReject = null;
+let skipPinCheck = false;
+
+const CONFIRM_ICONS = {
+  danger: '<svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+  mint: '<svg viewBox="0 0 24 24" fill="none" stroke="var(--mint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>'
+};
+function setConfirmTone(tone){
+  const icon = document.getElementById('confirmIcon');
+  const okBtn = document.getElementById('confirmOk');
+  icon.innerHTML = CONFIRM_ICONS[tone];
+  icon.style.background = tone==='mint' ? 'rgba(94,234,212,0.12)' : 'rgba(239,100,97,0.12)';
+  okBtn.classList.toggle('danger', tone==='danger');
+  okBtn.classList.toggle('primary', tone==='mint');
+}
+
+function requestPin({title, text, okLabel, tone, skipCheck}){
+  return new Promise((resolve, reject)=>{
+    pinGateResolve = resolve;
+    pinGateReject = reject;
+    skipPinCheck = !!skipCheck;
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmText').textContent = text;
+    setConfirmTone(tone || 'danger');
+    document.getElementById('confirmOk').textContent = okLabel || 'Ок';
+    const wrap = document.getElementById('confirmPinWrap');
+    const input = document.getElementById('confirmPinInput');
+    input.value = '';
+    hideErr('confirmPinError');
+    input.classList.remove('error');
+    wrap.style.display = (state.pinHash && !skipCheck) ? 'block' : 'none';
+    document.getElementById('confirmOverlay').classList.add('show');
+    if(state.pinHash && !skipCheck){
+      setTimeout(()=>{ input.focus(); }, 60);
+    }
+  });
+}
+function closeConfirm(){
+  document.getElementById('confirmOverlay').classList.remove('show');
+}
+function rejectPinGate(){
+  if(pinGateReject){
+    const rj = pinGateReject;
+    pinGateResolve = null; pinGateReject = null;
+    rj(new Error('cancelled'));
+  }
+}
+document.getElementById('confirmCancel').addEventListener('click', ()=>{
+  closeConfirm();
+  rejectPinGate();
+});
+document.getElementById('confirmOverlay').addEventListener('click', (e)=>{
+  if(e.target.id==='confirmOverlay'){ closeConfirm(); rejectPinGate(); }
+});
+document.getElementById('confirmOk').addEventListener('click', async ()=>{
+  const input = document.getElementById('confirmPinInput');
+  const entered = input.value || '';
+  if(state.pinHash && !skipPinCheck){
+    const enteredHash = await hashPin(entered);
+    if(enteredHash !== state.pinHash){
+      showErr('confirmPinError');
+      input.classList.add('error');
+      return;
+    }
+    hideErr('confirmPinError');
+    if(!state.cryptoKey){
+      try{ state.cryptoKey = await deriveKey(entered, state.pinSalt); }
+      catch(e){ console.error('key derive failed', e); }
+    }
+  }
+  closeConfirm();
+  if(pinGateResolve){
+    const r = pinGateResolve;
+    pinGateResolve = null; pinGateReject = null;
+    r(entered);
+  }
+});
+
+// ---------- Clear all ----------
+document.getElementById('clearBtn').addEventListener('click', async ()=>{
+  if(state.history.length===0) return;
+  try{
+    await requestPin({
+      title: 'Удалить всю историю?',
+      text: `Все сохранённые пароли (${state.history.length}) будут удалены безвозвратно.`,
+      okLabel: 'Удалить', tone: 'danger'
+    });
+  }catch(e){ return; }
+  state.history = [];
+  saveHistory();
+  renderHistory();
+  showToast('История очищена');
+});
+
+// ---------- UI bindings ----------
+document.getElementById('lenSlider').addEventListener('input', (e)=>{
+  state.length = parseInt(e.target.value);
+  document.getElementById('lenVal').textContent = state.length;
+  updateStrengthUI();
+  saveSettings();
+});
+
+document.querySelectorAll('.toggle').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    const opt = t.dataset.opt;
+    state[opt] = !state[opt];
+    t.classList.toggle('active', state[opt]);
+    updateStrengthUI();
+    saveSettings();
+  });
+});
+
+document.getElementById('genBtn').addEventListener('click', ()=>{
+  const pw = generatePassword();
+  if(!pw) return;
+  state.current = pw;
+  renderPassword(pw);
+  updateStrengthUI();
+});
+
+document.getElementById('copyBtn').addEventListener('click', async ()=>{
+  if(!state.current){ showToast('Сначала сгенерируй пароль'); return; }
+  const btn = document.getElementById('copyBtn');
+  const saved = await addToHistory(state.current);
+  if(!saved){ showToast('Отменено — пароль не сохранён'); return; }
+  copyToClipboard(state.current).then(()=>{
+    btn.classList.add('copied');
+    showToast('Скопировано и сохранено');
+    setTimeout(()=>btn.classList.remove('copied'), 1000);
+  }).catch(()=>{
+    showToast('Сохранено (копирование не удалось, скопируй вручную)');
+  });
+});
+
+document.getElementById('copyEmailBtn').addEventListener('click', ()=>{
+  const email = document.getElementById('emailInput').value.trim();
+  if(!email){ showToast('Сначала введи email'); return; }
+  copyToClipboard(email).then(()=>showToast('Email скопирован')).catch(()=>showToast('Не удалось скопировать'));
+});
+
+document.getElementById('toggleManualPwBtn').addEventListener('click', ()=>{
+  const inp = document.getElementById('manualPwInput');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+});
+
+async function saveManualPw(){
+  const inp = document.getElementById('manualPwInput');
+  const pw = inp.value;
+  if(!pw){ showToast('Сначала введи пароль'); return; }
+  const saved = await addToHistory(pw);
+  if(!saved){ showToast('Отменено — пароль не сохранён'); return; }
+  inp.value = '';
+  inp.type = 'password';
+  showToast('Пароль сохранён в историю');
+}
+document.getElementById('saveManualBtn').addEventListener('click', saveManualPw);
+document.getElementById('manualPwInput').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){ e.preventDefault(); saveManualPw(); }
+});
+
+// ---------- Init ----------
+(async function init(){
+  await loadState();
+  await loadSecurity();
+  updateSecurityIcon();
+  document.getElementById('lenSlider').value = state.length;
+  document.getElementById('lenVal').textContent = state.length;
+  if(state.lastEmail) document.getElementById('emailInput').value = state.lastEmail;
+  document.querySelectorAll('.toggle').forEach(t=>{
+    t.classList.toggle('active', !!state[t.dataset.opt]);
+  });
+  updateStrengthUI();
+  renderHistory();
+})();
+
+</script>
+</body>
+</html>
